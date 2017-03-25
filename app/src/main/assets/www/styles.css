@@ -26,7 +26,7 @@ hr {
 }
 #wrapper {
 	border: 1px solid #CCCCCC;
-	width: 900px;
+	width: 1000px;
 	margin: auto;
 	background-color: #333333;
 }
@@ -63,7 +63,7 @@ hr {
 	color: #AAC0E0;
 }
 #logo_area {
-	width: 460px;
+	width: 560px;
 	margin-top: 8px;
 	margin-left: 20px;
 	margin-bottom: 8px;
@@ -89,7 +89,7 @@ DIV#company_name H2 {
 	float: none;
 }
 #menu_area {
-	width: 646px;
+	width: 746px;
 	float: left;
 	background-image: url('images/menu.gif');
 	height: 56px;
@@ -101,7 +101,7 @@ DIV#company_name H2 {
 	float: right;
 }
 #menu_items {
-	width: 550px;
+	width: 650px;
 	height: 56px;
 	padding-top: 9px;
 	margin: auto;
@@ -128,7 +128,7 @@ DIV#company_name H2 {
 	padding-top: 16px;
 }
 #content_wrapper {
-	width: 900px;
+	width: 1000px;
 	margin: auto;
 	background-color: #1D3861;
 	overflow: auto;
@@ -137,7 +137,7 @@ DIV#company_name H2 {
 }
 #left_content {
 	float: left;
-	width: 626px;
+	width: 726px;
 	background-color: #E2EEFE;
 	padding: 10px;
 	text-align: center;
@@ -145,7 +145,7 @@ DIV#company_name H2 {
 DIV#left_content P {
 	text-align: justify;
 	margin-left: 12px;
-	width: 580px;
+	width: 680px;
 }
 DIV#left_content H1 {
 	font-size: 22px;
@@ -195,7 +195,7 @@ DIV.right_content P {
 	width: 100%;
 }
 #footer {
-	width: 888px;
+	width: 988px;
 	padding: 6px;
 }
 DIV#footer A:visited {
@@ -206,34 +206,34 @@ DIV#footer A {
 }
 .image_container {
 	margin: auto;
-	width: 578px;
+	width: 678px;
 	height: 398px;
 }
 .image_top {
-	width: 578px;
+	width: 678px;
 	height: 19px;
 }
 .image_middle {
-	width: 578px;
+	width: 678px;
 	height: 360px;
 }
 .image {
 	position: relative;
 	float: left;
-	width: 540px;
+	width: 640px;
 	height: 360px;
 	background-color: #BBBBBB;
 	overflow: hidden;
 }
 .t {
 	background: url(images/t.gif) repeat-x;
-	width: 540px;
+	width: 640px;
 	height: 19px;
 	float: left;
 }
 .b {
 	background: url(images/b.gif) repeat-x;
-	width: 540px;
+	width: 640px;
 	height: 19px;
 	float: left;
 }
@@ -274,7 +274,7 @@ DIV#footer A {
 	float: left;
 }
 .image_bottom {
-	width: 578px;
+	width: 678px;
 	height: 19px;
 }
 DIV#footer P {
@@ -311,11 +311,11 @@ img.opacity:hover {
 }
 #gmap {
 	float: left;
-	width: 540px;
+	width: 640px;
 	height: 360px;
 }
 .info, .success, .warning, .error {
- 	width: 440px;
+ 	width: 540px;
 	margin: 40px 20px;
 	border: 1px solid;
 	padding :15px 10px 15px 50px;

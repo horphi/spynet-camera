@@ -172,7 +172,9 @@ public final class Utils {
                 (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         int wifiState = wm.getWifiState();
         BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
-        int panState = ba.getProfileConnectionState(5 /* BluetoothProfile.PAN */);
+        int panState = ba != null ?
+                ba.getProfileConnectionState(5 /* BluetoothProfile.PAN */) :
+                BluetoothAdapter.STATE_DISCONNECTED;
         return wifiState == WifiManager.WIFI_STATE_ENABLED
                 || wifiState == WifiManager.WIFI_STATE_ENABLING
                 || panState == BluetoothProfile.STATE_CONNECTED
