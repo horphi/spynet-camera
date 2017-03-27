@@ -132,13 +132,13 @@ public class StreamConnection extends TCPConnection {
      * @throws InterruptedException if interrupted while waiting
      */
     public boolean push(VideoFrame frame) throws InterruptedException {
-        if (frame.isCompressed()) {
+        if (frame.isH264()) {
             if (!isStreamingH264())
                 return false;
             if (mSliceQueue.offer(frame, QUEUE_WRITE_TIMEOUT, TimeUnit.MILLISECONDS))
                 return true;
             Log.v(TAG, "cannot add the slice, the queue is full");
-        } else {
+        } else if (frame.isJPEG()) {
             if (!isStreamingMJPEG())
                 return false;
             if (mFrameQueue.offer(frame, QUEUE_WRITE_TIMEOUT, TimeUnit.MILLISECONDS))
@@ -196,7 +196,7 @@ public class StreamConnection extends TCPConnection {
      * @throws InterruptedException if interrupted while waiting
      */
     public boolean push(AudioData data) throws InterruptedException {
-        if (data.isCompressed()) {
+        if (data.isAAC()) {
             if (!isStreamingAAC())
                 return false;
             if (mAudioQueue.offer(data, QUEUE_WRITE_TIMEOUT, TimeUnit.MILLISECONDS))

@@ -31,7 +31,6 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.spynet.camera.common.TimeoutCache;
-import com.spynet.camera.common.Image;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.media.AudioData;
 import com.spynet.camera.media.ByteArrayInputBitStream;
@@ -85,8 +84,6 @@ public class StreamServer
     private static final int RTSP_SESSION_TIMEOUT = 30;
     // RTSP session timeout in seconds (effective, extra time to be safe)
     private static final int RTSP_SAFE_TIMEOUT = RTSP_SESSION_TIMEOUT + 5;
-    // MJPEG min quality
-    private static final int MJPEG_MIN_QUALITY = 10;
     // MJPEG min speed
     private static final double MJPEG_MIN_FPS = 0.1;
     // DDNS initial update delay in seconds
@@ -126,18 +123,20 @@ public class StreamServer
         /**
          * Notifies that a new stream has started.
          *
+         * @param host the remote host
          * @param type the stream type
          * @param id   the stream id
          */
-        void onStreamStarted(String type, long id);
+        void onStreamStarted(String host, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
          *
+         * @param host the remote host
          * @param type the stream type
          * @param id   the stream id
          */
-        void onStreamStopped(String type, long id);
+        void onStreamStopped(String host, String type, long id);
 
         /**
          * Notifies that an action has been requested by a client.
@@ -564,8 +563,7 @@ public class StreamServer
                                         sendErrorReply(connection, request[2], 503, "Service Unavailable");
                                         return;
                                     }
-                                    sendMJPEGStream((StreamConnection) connection,
-                                            query.get("quality"), query.get("fps"));
+                                    sendMJPEGStream((StreamConnection) connection, query.get("fps"));
                                     return;
                                 // H264 stream (RTSP over HTTP, GET connection)
                                 case "/video/h264":
@@ -662,16 +660,22 @@ public class StreamServer
     @Override
     public void onStreamStarted(StreamConnection connection, String type, long id) {
         mStreams.putIfAbsent(id, type);
+        String host = connection.getInetAddress() != null ?
+                connection.getInetAddress().getHostName() :
+                null;
         if (mCallback != null)
-            mCallback.onStreamStarted(type, id);
+            mCallback.onStreamStarted(host, type, id);
         Log.v(TAG, "stream started on connection " + connection.toString());
     }
 
     @Override
     public void onStreamStopped(StreamConnection connection, String type, long id) {
         mStreams.remove(id);
+        String host = connection.getInetAddress() != null ?
+                connection.getInetAddress().getHostName() :
+                null;
         if (mCallback != null)
-            mCallback.onStreamStopped(type, id);
+            mCallback.onStreamStopped(host, type, id);
         Log.v(TAG, "stream stopped on connection " + connection.toString());
     }
 
@@ -1033,10 +1037,6 @@ public class StreamServer
                             .put("available", canStream("/video/mjpeg"))
                             .put("parameters", new JSONArray()
                                     .put(new JSONObject()
-                                            .put("name", "quality")
-                                            .put("min", MJPEG_MIN_QUALITY)
-                                            .put("max", SettingsActivity.getMJPEGQuality(mContext)))
-                                    .put(new JSONObject()
                                             .put("name", "fps")
                                             .put("min", MJPEG_MIN_FPS)
                                             .put("max", SettingsActivity.getMJPEGFrameSpeed(mContext)))))
@@ -1077,15 +1077,12 @@ public class StreamServer
     /**
      * Helper to send the MJPEG stream.
      */
-    private void sendMJPEGStream(final StreamConnection connection, String quality, String fps)
+    private void sendMJPEGStream(final StreamConnection connection, String fps)
             throws IOException {
 
         final long id = Utils.getUniqueID();
         VideoFrame frame;
 
-        int jpegQuality = Utils.coerce(
-                Utils.tryParseInt(quality, SettingsActivity.getMJPEGQuality(mContext)),
-                MJPEG_MIN_QUALITY, SettingsActivity.getMJPEGQuality(mContext));
         double mjpegFps = Utils.coerce(
                 Utils.tryParseDouble(fps, SettingsActivity.getMJPEGFrameSpeed(mContext)),
                 MJPEG_MIN_FPS, SettingsActivity.getMJPEGFrameSpeed(mContext));
@@ -1120,10 +1117,7 @@ public class StreamServer
                         "--jpegboundary\r\n" +
                         "Content-Type: image/jpeg\r\n" +
                         "\r\n");
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                Image.compressToJpeg(frame.getData(), frame.getWidth(), frame.getHeight(),
-                        frame.getFormat(), jpegQuality, out);
-                connection.write(out.toByteArray());
+                connection.write(frame.getData());
             }
         } catch (InterruptedException e) {
             Log.v(TAG, "stream interrupted");

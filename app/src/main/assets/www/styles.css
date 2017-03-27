@@ -32,7 +32,7 @@ hr {
 }
 #header {
 	width: 100%;
-	height:150px;
+	height: 150px;
 	background-image: url('images/blue_corner.gif');
 	background-position: right bottom;
 	background-repeat: no-repeat;
@@ -173,7 +173,6 @@ DIV#left_content H1 {
 	float: right;
 	text-align: left;
 }
-
 /*following section is for 3d frame around video*/
 DIV.right_content H3 {
 	color: #890000;
@@ -222,7 +221,7 @@ DIV#footer A {
 	float: left;
 	width: 640px;
 	height: 360px;
-	background-color: #BBBBBB;
+	background-color: #282842;
 	overflow: hidden;
 }
 .t {
@@ -283,31 +282,39 @@ DIV#footer P {
 }
 .bottomright {
 	position: absolute;
-    bottom: 8px;
-    right: 8px;
+	bottom: 8px;
+	right: 8px;
 }
 .topright {
 	position: absolute;
-    top: 8px;
-    right: 8px;
+	top: 8px;
+	right: 8px;
 }
 img.opacity {
 	opacity: 0.2;
- 	-webkit-transition: opacity 0.5s linear;
- 	transition: opacity 0.5s linear;
-}	
+	-webkit-transition: opacity 0.5s linear;
+	transition: opacity 0.5s linear;
+}
 img.opacity:hover {
 	opacity: 1;
- 	-webkit-transition: opacity 0.5s ease;
- 	transition: opacity 0.5s ease;
+	-webkit-transition: opacity 0.5s ease;
+	transition: opacity 0.5s ease;
 }
 #mjpeg {
 	position: relative;
 	float: left;
 	left: 50%;
 	top : 50%;
-	-webkit-transform: translate(-50%,-50%);
-	transform: translate(-50%,-50%);
+	-webkit-transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);
+}
+#mjpeg:-webkit-full-screen {
+ position: fixed;
+ float: none;
+}
+#mjpeg:fullscreen {
+ position: fixed;
+ float: none;
 }
 #gmap {
 	float: left;
@@ -315,13 +322,13 @@ img.opacity:hover {
 	height: 360px;
 }
 .info, .success, .warning, .error {
- 	width: 540px;
+	width: 540px;
 	margin: 40px 20px;
 	border: 1px solid;
-	padding :15px 10px 15px 50px;
+	padding : 15px 10px 15px 50px;
 	background-repeat: no-repeat;
 	background-position: 10px center;
-	box-shadow: 4px 4px 4px #888888;
+	box-shadow: 4px 4px 4px #0D0D17;
 	text-align: left;
 }
 .info {
@@ -332,7 +339,7 @@ img.opacity:hover {
 .success {
 	color: #4F8A10;
 	background-color: #DFF2BF;
-	background-image:url('images/success.png');
+	background-image: url('images/success.png');
 }
 .warning {
 	color: #9F6000;

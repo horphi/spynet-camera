@@ -28,7 +28,6 @@ import android.content.res.Resources;
 import android.util.Log;
 
 import com.spynet.camera.R;
-import com.spynet.camera.common.Image;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.media.VideoFrame;
 import com.spynet.camera.network.Mangocam.API.DisconnectCommand;
@@ -48,7 +47,6 @@ import com.spynet.camera.ui.SettingsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -87,6 +85,8 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     private final Thread mCommThread;                   // Thread to handle connections and communications
     private final ConcurrentHashMap<Long, String>       // Thread-safe streams list
             mStreams;
+    private final int mImageWidth;                      // Image width
+    private final int mImageHeight;                     // Image height
     private MangocamAdapterCallback mCallback;          // The callback to notify the client
     private List<String> mHosts;                        // List of known hosts
     private int mHostIndex;                             // Index of the next host to use
@@ -95,8 +95,6 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     private int mReconnectTimer;                        // Time before reconnection in seconds
     private String mReconnectReason;                    // Reason for reconnection
     private SendMJPEGCommand mSendCmd;                  // Command used to send the MJPEG stream
-    private volatile int mImageWidth;                   // Image width
-    private volatile int mImageHeight;                  // Image height
     private volatile boolean mWiFiAvailable;            // Whether the WiFi is available
     private volatile boolean mMobileAvailable;          // Indicates that the mobile data is available
     private volatile boolean mIsConnected;              // Indicates whether the adapter is connected
@@ -108,18 +106,20 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
         /**
          * Notifies that a new stream has started.
          *
+         * @param host the remote host
          * @param type the stream type
          * @param id   the stream id
          */
-        void onStreamStarted(String type, long id);
+        void onStreamStarted(String host, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
          *
+         * @param host the remote host
          * @param type the stream type
          * @param id   the stream id
          */
-        void onStreamStopped(String type, long id);
+        void onStreamStopped(String host, String type, long id);
 
         /**
          * Notifies that an adapter has connected to its server.
@@ -149,8 +149,10 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
      * Creates a new MangocamAdapter object.
      *
      * @param context the context where the MangocamAdapter is used
+     * @param width   the image width in pixels
+     * @param height  the image height in pixels
      */
-    public MangocamAdapter(@NotNull Context context) {
+    public MangocamAdapter(@NotNull Context context, int width, int height) {
         // Initialize variables
         mContext = context;
         if (mContext instanceof MangocamAdapterCallback) {
@@ -158,6 +160,8 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
         } else {
             Log.w(TAG, "MangocamAdapterCallback is not supported by the specified context");
         }
+        mImageWidth = width;
+        mImageHeight = height;
         mRandom = new Random();
         mClipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
         mNotification = new MangocamNotification(mContext);
@@ -220,11 +224,6 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
      * @throws InterruptedException if interrupted while waiting
      */
     public void push(VideoFrame frame) throws InterruptedException {
-        // Save image size
-        if (!frame.isCompressed()) {
-            mImageWidth = frame.getWidth();
-            mImageHeight = frame.getHeight();
-        }
         // Forward to all the opened connections
         for (StreamConnection c : mConnections)
             c.push(frame);
@@ -580,7 +579,6 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     private void sendMJPEG(StreamConnection connection) throws IOException, InterruptedException {
 
         VideoFrame frame;
-        int jpegQuality = SettingsActivity.getMJPEGQuality(mContext);
         double mjpegFps = Math.min(
                 SettingsActivity.getMJPEGFrameSpeed(mContext),
                 mSendCmd.getRate());
@@ -601,17 +599,14 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
             if (frame.getTimestamp() < lastTime + delay)
                 continue;
             lastTime = frame.getTimestamp();
-            // Compress and send the JPEG image
-            ByteArrayOutputStream jout = new ByteArrayOutputStream();
-            Image.compressToJpeg(frame.getData(), frame.getWidth(), frame.getHeight(),
-                    frame.getFormat(), jpegQuality, jout);
+            // Send the JPEG image
             String header = "" +
                     "Mango-Tag: " + System.currentTimeMillis() / 1000 + "\r\n" +
                     "Content-Type: image/jpeg\r\n" +
-                    "Content-Length: " + jout.size() + "\r\n" +
+                    "Content-Length: " + frame.getData().length + "\r\n" +
                     "\r\n";
             connection.write(header);
-            connection.write(jout.toByteArray());
+            connection.write(frame.getData());
             // Check if need to re-post video (splitting into chunks)
             if (uploadStart < System.currentTimeMillis() - mSendCmd.getSplitSec() * 1000) {
                 Log.v(TAG, "splitting video");
@@ -654,16 +649,22 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     @Override
     public void onStreamStarted(StreamConnection connection, String type, long id) {
         mStreams.putIfAbsent(id, type);
+        String host = connection.getInetAddress() != null ?
+                connection.getInetAddress().getHostName() :
+                null;
         if (mCallback != null)
-            mCallback.onStreamStarted(type, id);
+            mCallback.onStreamStarted(host, type, id);
         Log.d(TAG, "upload started, type " + type + ", id " + id);
     }
 
     @Override
     public void onStreamStopped(StreamConnection connection, String type, long id) {
         mStreams.remove(id);
+        String host = connection.getInetAddress() != null ?
+                connection.getInetAddress().getHostName() :
+                null;
         if (mCallback != null)
-            mCallback.onStreamStopped(type, id);
+            mCallback.onStreamStopped(host, type, id);
         Log.d(TAG, "upload stopped, type " + type + ", id " + id);
     }
 

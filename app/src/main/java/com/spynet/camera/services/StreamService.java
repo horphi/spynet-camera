@@ -165,14 +165,17 @@ public class StreamService extends Service
                     break;
                 case "Recorder":
                     synchronized (mRecorderLock) {
+                        boolean mjpegEnabled = false;
                         // Stop the Recorder
                         if (mRecorder != null) {
+                            mjpegEnabled = mRecorder.getMJPEGEnabled();
                             mRecorder.close();
                             mRecorder = null;
                         }
                         // Start the Recorder
                         try {
                             mRecorder = new Recorder(StreamService.this);
+                            mRecorder.setMJPEGEnabled(mjpegEnabled);
                         } catch (Exception e) {
                             Toast.makeText(StreamService.this,
                                     R.string.error_recorder_not_started, Toast.LENGTH_LONG).show();
@@ -198,7 +201,8 @@ public class StreamService extends Service
                         }
                         // Start the MangocamAdapter
                         if (SettingsActivity.getMangoEnabled(StreamService.this)) {
-                            mMangocamAdapter = new MangocamAdapter(StreamService.this);
+                            int[] size = SettingsActivity.getVideoResolution(StreamService.this);
+                            mMangocamAdapter = new MangocamAdapter(StreamService.this, size[0], size[1]);
                             mMangocamAdapter.setWiFiAvailable(mWiFiAvailable);
                             mMangocamAdapter.setMobileAvailable(mMobileAvailable && !wifiOnly);
                         }
@@ -423,7 +427,8 @@ public class StreamService extends Service
 
         // Start the MangocamAdapter
         if (SettingsActivity.getMangoEnabled(this)) {
-            mMangocamAdapter = new MangocamAdapter(this);
+            int[] size = SettingsActivity.getVideoResolution(this);
+            mMangocamAdapter = new MangocamAdapter(this, size[0], size[1]);
         }
 
         // Start the AngelcamAdapter
@@ -576,16 +581,24 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onStreamStarted(String type, long id) {
+    public void onStreamStarted(String host, String type, long id) {
         int streams = 0;
         int audio = 0;
+        int mjpeg = 0;
         // Add the stream to the list
         synchronized (mStreams) {
             if (mStreams.putIfAbsent(id, type) == null) {
                 streams = mStreams.size();
                 for (String t : mStreams.values()) {
                     if (t.equals(StreamConnection.TYPE_AAC)) audio++;
+                    else if (t.equals(StreamConnection.TYPE_MJPEG)) mjpeg++;
                 }
+            }
+        }
+        // Enable the MJPEG stream
+        if (mjpeg == 1) {
+            synchronized (mRecorderLock) {
+                mRecorder.setMJPEGEnabled(true);
             }
         }
         // Notify the client
@@ -603,16 +616,24 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onStreamStopped(String type, long id) {
+    public void onStreamStopped(String host, String type, long id) {
         int streams = 0;
         int audio = 0;
+        int mjpeg = 0;
         // Remove the stream from the list
         synchronized (mStreams) {
             if (mStreams.remove(id) != null) {
                 streams = mStreams.size();
                 for (String t : mStreams.values()) {
                     if (t.equals(StreamConnection.TYPE_AAC)) audio++;
+                    else if (t.equals(StreamConnection.TYPE_MJPEG)) mjpeg++;
                 }
+            }
+        }
+        // Disable the MJPEG stream
+        if (mjpeg == 0) {
+            synchronized (mRecorderLock) {
+                mRecorder.setMJPEGEnabled(false);
             }
         }
         // Notify the client

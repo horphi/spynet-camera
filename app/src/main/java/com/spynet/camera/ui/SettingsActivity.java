@@ -979,6 +979,8 @@ public class SettingsActivity
                     key.equals(KEY_PREF_VIDEO_QUALITY_K) ||
                     key.equals(KEY_PREF_VIDEO_FPS) ||
                     key.equals(KEY_PREF_VIDEO_I_DISTANCE) ||
+                    key.equals(KEY_PREF_MJPEG_QUALITY) ||
+                    key.equals(KEY_PREF_MJPEG_FPS) ||
                     key.equals(KEY_PREF_AUDIO_ENABLED) ||
                     key.equals(KEY_PREF_AUDIO_QUALITY_K)) {
                 SettingsActivity activity = (SettingsActivity) getActivity();

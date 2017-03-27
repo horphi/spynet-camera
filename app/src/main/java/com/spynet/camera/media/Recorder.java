@@ -63,6 +63,7 @@ public class Recorder
         implements
         Closeable,
         LiveCamera.FrameCallback,
+        MJPEGEncoder.CodecCallback,
         AudioRecorder.AudioCallback,
         VideoCodec.CodecCallback,
         AudioCodec.CodecCallback {
@@ -87,6 +88,7 @@ public class Recorder
     private RecorderCallback mCallback;                 // The RecorderCallback implemented by mContext
     private BroadcastReceiver mScreenCaptureReceiver;   // The BroadcastReceiver to receive screen capture authorization
     private Camera mCamera;                             // LiveCamera that will generate the video stream
+    private MJPEGEncoder mMJPEGEncoder;                 // Encoder to encode the video in MJPEG
     private AudioRecorder mAudioRecorder;               // AudioRecorder that will generate the audio stream
     private VideoEncoder mVideoEncoder;                 // Encoder to encode the video
     private AudioEncoder mAudioEncoder;                 // Encoder to encode the audio
@@ -99,7 +101,7 @@ public class Recorder
     private long mLastFpsUpdate;                        // Last timestamp when fps was updated
     private volatile boolean mVideoCfgSent;             // Whether the video configuration has been sent (SPS and PPS)
     private volatile boolean mAudioCfgSent;             // Whether the audio configuration has been sent
-
+    private volatile boolean mMJPEGEnabled;             // Whether the MJPEG compression is required
 
     /**
      * A client may implement this interface to receive audio and video data buffers
@@ -340,6 +342,26 @@ public class Recorder
             mContext.startActivity(intent);
         }
 
+        // Create the MJPEGEncoder object
+        if (mCamera != null) {
+            try {
+                mMJPEGEncoder = new MJPEGEncoder(this);
+            } catch (Exception e) {
+                Log.e(TAG, "unable to create the MJPEG video encoder", e);
+            }
+        }
+
+        // Start the MJPEGEncoder object
+        if (mMJPEGEncoder != null) {
+            try {
+                mMJPEGEncoder.open(
+                        SettingsActivity.getMJPEGQuality(mContext),
+                        SettingsActivity.getMJPEGFrameSpeed(mContext));
+            } catch (Exception e) {
+                Log.e(TAG, "unable to start the MJPEG video encoder", e);
+            }
+        }
+
         // Create the AudioRecorder object
         if (SettingsActivity.getAACEnabled(mContext)) {
             try {
@@ -435,6 +457,12 @@ public class Recorder
             mVideoEncoder.close();
             mVideoEncoder.release();
             mVideoEncoder = null;
+        }
+
+        // Shutdown the MJPEG encoder
+        if (mMJPEGEncoder != null) {
+            mMJPEGEncoder.close();
+            mMJPEGEncoder = null;
         }
 
         // Shutdown the audio recorder
@@ -646,12 +674,12 @@ public class Recorder
     }
 
     /**
-     * Whether the uncompressed video frames are available.
+     * Whether the MJPEG stream is available.
      *
      * @return {@code true} if the MJPEG encoder is available, {@code false} otherwise
      */
     public synchronized boolean isMJPEGAvailable() {
-        return mCamera != null;
+        return mMJPEGEncoder != null;
     }
 
     /**
@@ -666,6 +694,22 @@ public class Recorder
      */
     public synchronized void requestSyncFrame() {
         if (mVideoEncoder != null) mVideoEncoder.requestSyncFrame();
+    }
+
+    /**
+     * Enables the MJPEG stream.
+     *
+     * @param enabled whether the MJPEG stream is enabled
+     */
+    public void setMJPEGEnabled(boolean enabled) {
+        mMJPEGEnabled = enabled;
+    }
+
+    /**
+     * @return whether the MJPEG stream is enabled
+     */
+    public boolean getMJPEGEnabled() {
+        return mMJPEGEnabled;
     }
 
     /**
@@ -691,10 +735,15 @@ public class Recorder
 
     @Override
     public void onFrameAvailable(byte[] data, long timestamp) {
-        // Forward to the client
-        if (mCallback != null) {
-            mCallback.onDataAvailable(new VideoFrame(
-                    data, mFrameSize.x, mFrameSize.y, mFrameFormat, timestamp));
+        // Send the frame to the MJPEG encoder
+        if (mMJPEGEncoder != null && mMJPEGEnabled) {
+            try {
+                mMJPEGEncoder.push(new VideoFrame(
+                        data, mFrameSize.x, mFrameSize.y, mFrameFormat, timestamp));
+            } catch (InterruptedException e) {
+                Log.e(TAG, "cannot send the frame to the MJPEG encoder, operation interrupted");
+                Thread.currentThread().interrupt();
+            }
         }
         // Convert the frame format and send it to the video encoder
         if (mVideoEncoder != null) {
@@ -722,6 +771,16 @@ public class Recorder
             if (timestamp - mLastFpsUpdate > FPS_UPDATE_TIME * 1000) {
                 mLastFpsUpdate = timestamp;
                 mCallback.onFrameRate(mCamera.getAverageFps());
+            }
+        }
+    }
+
+    @Override
+    public void onDataAvailable(MJPEGEncoder encoder, byte[] data, int width, int height, long timestamp) {
+        if (encoder == mMJPEGEncoder) {
+            // Forward to the client
+            if (mCallback != null) {
+                mCallback.onDataAvailable(new VideoFrame(data, width, height, timestamp));
             }
         }
     }

@@ -24,12 +24,10 @@ package com.spynet.camera.services;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -64,7 +62,6 @@ public class LocationProvider implements Closeable, LocationListener {
 
     private final Context mContext;                     // The context that uses the LocationProvider
     private final LocationManager mLocationManager;     // The location manager
-    private final Looper mLooper;                       // The looper that will receive location notifications
     private final Timer mTimeoutTimer;                  // The timer used to switch back to coarse mode
     private LocationCallback mCallback;                 // The LocationCallback implemented by mContext
     private Location mCurrentLocation;                  // Last known location
@@ -99,11 +96,6 @@ public class LocationProvider implements Closeable, LocationListener {
             Log.w(TAG, "LocationCallback is not implemented by the specified context");
         }
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
-        if (Looper.myLooper() != null) {
-            mLooper = Looper.myLooper();
-        } else {
-            mLooper = Looper.getMainLooper();
-        }
         mIsFineMode = true; // allow requestCoarseUpdates() to execute
         requestCoarseUpdates();
         getLastKnownLocation();
@@ -172,20 +164,18 @@ public class LocationProvider implements Closeable, LocationListener {
                 ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION);
         int coarseLocationPermission =
                 ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (fineLocationPermission == PackageManager.PERMISSION_GRANTED ||
-                coarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            Criteria c = new Criteria();
-            c.setAccuracy(Criteria.ACCURACY_COARSE);
-            c.setPowerRequirement(Criteria.POWER_LOW);
-            c.setAltitudeRequired(false);
-            c.setBearingRequired(false);
-            c.setCostAllowed(false);
-            c.setSpeedRequired(false);
-            mLocationManager.requestLocationUpdates(
-                    COARSE_MIN_LOCATION_TIME, COARSE_MIN_LOCATION_DISTANCE, c, this, mLooper);
-            Log.d(TAG, "switch to coarse mode");
-        } else {
-            Log.w(TAG, "no permissions to start coarse mode");
+        if (fineLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            coarseLocationPermission = PackageManager.PERMISSION_GRANTED;
+            if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                        COARSE_MIN_LOCATION_TIME, COARSE_MIN_LOCATION_DISTANCE, this);
+            }
+        }
+        if (coarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
+                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                        COARSE_MIN_LOCATION_TIME, COARSE_MIN_LOCATION_DISTANCE, this);
+            }
         }
     }
 
@@ -193,7 +183,6 @@ public class LocationProvider implements Closeable, LocationListener {
      * Sets location updates for better performance.
      */
     public synchronized void requestFineUpdates() {
-
         synchronized (this) {
             mFineRequestsNum++;
             if (mIsFineMode)
@@ -204,20 +193,18 @@ public class LocationProvider implements Closeable, LocationListener {
                 ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION);
         int coarseLocationPermission =
                 ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (fineLocationPermission == PackageManager.PERMISSION_GRANTED ||
-                coarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            Criteria c = new Criteria();
-            c.setAccuracy(Criteria.ACCURACY_FINE);
-            c.setPowerRequirement(Criteria.POWER_HIGH);
-            c.setAltitudeRequired(false);
-            c.setBearingRequired(false);
-            c.setCostAllowed(false);
-            c.setSpeedRequired(false);
-            mLocationManager.requestLocationUpdates(
-                    FINE_MIN_LOCATION_TIME, FINE_MIN_LOCATION_DISTANCE, c, this, mLooper);
-            Log.d(TAG, "switch to fine mode");
-        } else {
-            Log.w(TAG, "no permissions to start fine mode");
+        if (fineLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            coarseLocationPermission = PackageManager.PERMISSION_GRANTED;
+            if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                        FINE_MIN_LOCATION_TIME, FINE_MIN_LOCATION_DISTANCE, this);
+            }
+        }
+        if (coarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
+            if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
+                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                        FINE_MIN_LOCATION_TIME, FINE_MIN_LOCATION_DISTANCE, this);
+            }
         }
     }
 
@@ -225,15 +212,22 @@ public class LocationProvider implements Closeable, LocationListener {
      * Gets the last known location.
      */
     private void getLastKnownLocation() {
-        int fineLocationPermission = ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION);
-        int coarseLocationPermission = ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION);
+        int fineLocationPermission =
+                ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION);
+        int coarseLocationPermission =
+                ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION);
         if (fineLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            coarseLocationPermission = PackageManager.PERMISSION_GRANTED;
+            if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
+                mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
         }
         if (coarseLocationPermission == PackageManager.PERMISSION_GRANTED) {
-            Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            if (location != null && isBetterLocation(location))
-                mCurrentLocation = location;
+            if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
+                Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if (location != null && isBetterLocation(location))
+                    mCurrentLocation = location;
+            }
         }
     }
 

@@ -28,8 +28,8 @@ android {
         applicationId "com.spynet.camtest"
         minSdkVersion 17
         targetSdkVersion 23
-        versionCode 38
-        versionName '2.4.7'
+        versionCode 39
+        versionName '2.4.8'
     }
     buildTypes {
         release {
@@ -46,7 +46,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support:support-v4:25.3.0'
     compile 'org.jetbrains:annotations:13.0'
-    compile 'com.takisoft.fix:preference-v7:25.2.0.0'
+    compile 'com.takisoft.fix:preference-v7:25.3.0.0'
     compile 'com.github.stkent:amplify:2.0.0'
     compile 'org.bitlet:weupnp:0.1.4'
 }

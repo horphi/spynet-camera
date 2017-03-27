@@ -28,15 +28,13 @@ import android.graphics.ImageFormat;
  */
 public class VideoFrame {
 
-    private static final int FORMAT_COMPRESSED = -1;
-    private static final int TYPE_UNCOMPRESSED_VIDEO = 1;
-    private static final int TYPE_COMPRESSED_VIDEO = 2;
-    private static final int TYPE_VIDEO_CONFIG = 3;
+    private static final int FORMAT_H264 = -1;
+    private static final int FORMAT_JPEG = -2;
+    private static final int FORMAT_VIDEO_CONFIG = -3;
 
     private final byte[] data;                      // The video data
     private final int width, height;                // The frame dimensions
     private final int format;                       // The data format
-    private final int type;                         // The data type
     private final String key;                       // The configuration key
     private final long timestamp;                   // The timestamp
 
@@ -46,7 +44,7 @@ public class VideoFrame {
      * @param data      the raw frame data
      * @param width     the frame width
      * @param height    the frame height
-     * @param format    the frame pixel format ({@link    ImageFormat})
+     * @param format    the frame pixel format ({@link ImageFormat})
      * @param timestamp the frame timestamp
      */
     public VideoFrame(byte[] data, int width, int height, int format, long timestamp) {
@@ -55,7 +53,23 @@ public class VideoFrame {
         this.height = height;
         this.format = format;
         this.timestamp = timestamp;
-        this.type = TYPE_UNCOMPRESSED_VIDEO;
+        this.key = null;
+    }
+
+    /**
+     * Creates a new VideoFrame object that contains a JPEG compressed video frame.
+     *
+     * @param data      the raw frame data
+     * @param width     the frame width
+     * @param height    the frame height
+     * @param timestamp the frame timestamp
+     */
+    public VideoFrame(byte[] data, int width, int height, long timestamp) {
+        this.data = (data != null ? data.clone() : null);
+        this.width = width;
+        this.height = height;
+        this.format = FORMAT_JPEG;
+        this.timestamp = timestamp;
         this.key = null;
     }
 
@@ -69,9 +83,8 @@ public class VideoFrame {
         this.data = (data != null ? data.clone() : null);
         this.width = -1;
         this.height = -1;
-        this.format = FORMAT_COMPRESSED;
+        this.format = FORMAT_H264;
         this.timestamp = timestamp;
-        this.type = TYPE_COMPRESSED_VIDEO;
         this.key = null;
     }
 
@@ -85,9 +98,8 @@ public class VideoFrame {
         this.data = (data != null ? data.clone() : null);
         this.width = -1;
         this.height = -1;
-        this.format = FORMAT_COMPRESSED;
+        this.format = FORMAT_VIDEO_CONFIG;
         this.timestamp = -1;
-        this.type = TYPE_VIDEO_CONFIG;
         this.key = key;
     }
 
@@ -127,19 +139,25 @@ public class VideoFrame {
     }
 
     /**
-     * @return {@code true} if the VideoFrame represents a compressed slice,
-     * {@code false} otherwise
+     * @return {@code true} if the data is a H264 slide, {@code false} otherwise
      */
-    public boolean isCompressed() {
-        return format == FORMAT_COMPRESSED;
+    public boolean isH264() {
+        return format == FORMAT_H264;
     }
 
     /**
-     * @return {@code true} if the data contains audio configuration information,
+     * @return {@code true} if the data is a JPEG video frame, {@code false} otherwise
+     */
+    public boolean isJPEG() {
+        return format == FORMAT_JPEG;
+    }
+
+    /**
+     * @return {@code true} if the data contains video configuration information,
      * {@code false} otherwise
      */
     public boolean isConfig() {
-        return type == TYPE_VIDEO_CONFIG;
+        return format == FORMAT_VIDEO_CONFIG;
     }
 
     /**

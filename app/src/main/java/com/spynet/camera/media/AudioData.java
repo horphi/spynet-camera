@@ -28,14 +28,11 @@ import android.media.AudioFormat;
  */
 public class AudioData {
 
-    private static final int FORMAT_COMPRESSED = -1;
-    private static final int TYPE_UNCOMPRESSED_AUDIO = 1;
-    private static final int TYPE_COMPRESSED_AUDIO = 2;
-    private static final int TYPE_AUDIO_CONFIG = 3;
+    private static final int FORMAT_AAC = -1;
+    private static final int FORMAT_AUDIO_CONFIG = -2;
 
     private final byte[] data;                      // The audio data
     private final int format;                       // The data format
-    private final int type;                         // The data type
     private final long timestamp;                   // The timestamp
 
     /**
@@ -49,7 +46,6 @@ public class AudioData {
         this.data = (data != null ? data.clone() : null);
         this.format = format;
         this.timestamp = timestamp;
-        this.type = TYPE_UNCOMPRESSED_AUDIO;
     }
 
     /**
@@ -60,9 +56,8 @@ public class AudioData {
      */
     public AudioData(byte[] data, long timestamp) {
         this.data = (data != null ? data.clone() : null);
-        this.format = FORMAT_COMPRESSED;
+        this.format = FORMAT_AAC;
         this.timestamp = timestamp;
-        this.type = TYPE_COMPRESSED_AUDIO;
     }
 
     /**
@@ -72,9 +67,8 @@ public class AudioData {
      */
     public AudioData(byte[] data) {
         this.data = (data != null ? data.clone() : null);
-        this.format = FORMAT_COMPRESSED;
+        this.format = FORMAT_AUDIO_CONFIG;
         this.timestamp = 0;
-        this.type = TYPE_AUDIO_CONFIG;
     }
 
     /**
@@ -99,11 +93,10 @@ public class AudioData {
     }
 
     /**
-     * @return {@code true} if the data represents compressed audio,
-     * {@code false} otherwise
+     * @return {@code true} if the data contains compressed audio, {@code false} otherwise
      */
-    public boolean isCompressed() {
-        return format == FORMAT_COMPRESSED;
+    public boolean isAAC() {
+        return format == FORMAT_AAC;
     }
 
     /**
@@ -111,6 +104,6 @@ public class AudioData {
      * {@code false} otherwise
      */
     public boolean isConfig() {
-        return type == TYPE_AUDIO_CONFIG;
+        return format == FORMAT_AUDIO_CONFIG;
     }
 }

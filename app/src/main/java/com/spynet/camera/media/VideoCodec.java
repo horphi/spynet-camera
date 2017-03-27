@@ -45,7 +45,7 @@ public abstract class VideoCodec {
     protected final int BUFFER_TIMEOUT = 1000;          // Timeout to access buffers in us
 
     protected final BlockingQueue<VideoFrame> mQueue;   // The queue used to pass video data to the VideoCodec
-    protected final CodecCallback mCodecCallback;       // The CodecCallback implemented by mContext
+    protected final CodecCallback mCodecCallback;       // The CodecCallback implemented by the client
 
     /**
      * A client may implement this interface to receive data buffers as they are available.

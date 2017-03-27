@@ -6,6 +6,7 @@ var camAccuracy = null;
 var locationTimer = null;
 var lastLocationUpdate = 0;
 var autoCenter = false;
+var fitWidth = false;
 
 function setCookie(cookieName, cookieValue, expdays) {
 	"use strict";
@@ -30,12 +31,12 @@ function getCookie(cookieName) {
 function setImageSize() {
 	"use strict";
 	var mjpeg = document.getElementById("mjpeg");
-	if (mjpeg.width / mjpeg.height > 540 / 360) {
-		mjpeg.style.height = "100%";
-		mjpeg.style.width = "auto";
-	} else {
+	if (fitWidth) {
 		mjpeg.style.width = "100%";
 		mjpeg.style.height = "auto";
+	} else {
+		mjpeg.style.height = "100%";
+		mjpeg.style.width = "auto";
 	}
 }
 
@@ -248,7 +249,9 @@ function navigate(dst) {
 			document.getElementById("map").className = "other_menu_item";
 			document.getElementById("sensors").className = "other_menu_item";
 			document.getElementById("image").innerHTML = 
-				"<img id=\"mjpeg\" alt=\"MJPEG\" src=\"video/mjpeg\" onload=\"setImageSize()\"/>" +
+				"<img id=\"mjpeg\" alt=\"MJPEG\" src=\"video/mjpeg\"" +
+					"onload=\"fitWidth=true; setImageSize()\"" +
+					"onclick=\"fitWidth=!fitWidth; setImageSize()\"/>" +
           		"<div class=\"topright\">" +
 					"<img class=\"opacity\" alt=\"FULLSCREEN\" src=\"images/fullscreen.png\"" +
 					"onclick=\"enterFullScreen()\"/>" +

@@ -95,7 +95,7 @@ public class TimeoutCache<K, V> implements Closeable {
      * @param value   the value of the cache entry
      * @param timeout the timeout period in seconds
      */
-    public void put(final K key, V value, int timeout) {
+    public synchronized void put(final K key, V value, int timeout) {
 
         // Create this object here so it can be referenced in the cleanupCacheRunnable below.
         final CacheValues cacheValues = new CacheValues(value);
