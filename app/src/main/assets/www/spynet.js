@@ -6,7 +6,28 @@ var camAccuracy = null;
 var locationTimer = null;
 var lastLocationUpdate = 0;
 var autoCenter = false;
-var fitWidth = false;
+var fitWidth = true;
+var fullscreen = false;
+
+document.addEventListener("fullscreenchange", function () {
+	"use strict";
+    fullscreen = document.fullscreen;
+}, false);
+
+document.addEventListener("mozfullscreenchange", function () {
+	"use strict";
+    fullscreen = document.mozFullScreen;
+}, false);
+
+document.addEventListener("webkitfullscreenchange", function () {
+	"use strict";
+    fullscreen = document.webkitIsFullScreen;
+}, false);
+
+document.addEventListener("msfullscreenchange", function () {
+	"use strict";
+    fullscreen = document.msFullscreenElement;
+}, false);
 
 function setCookie(cookieName, cookieValue, expdays) {
 	"use strict";
@@ -220,12 +241,20 @@ function stopZoom() {
 	zoomCnt = -1;
 }
 
-function enterFullScreen() {
+function toggleFullScreen() {
 	"use strict";
-	var mjpeg = document.getElementById("mjpeg");
-	var requestMethod = mjpeg.requestFullScreen || mjpeg.webkitRequestFullScreen || mjpeg.mozRequestFullScreen || mjpeg.msRequestFullscreen;
-	if (requestMethod) {
-		requestMethod.call(mjpeg);
+	var requestMethod;
+	if (!fullscreen) {
+		var mjpeg = document.getElementById("image");
+		requestMethod = mjpeg.requestFullScreen || mjpeg.webkitRequestFullScreen || mjpeg.mozRequestFullScreen;
+		if (requestMethod) {
+			requestMethod.call(mjpeg);
+		}
+	} else {
+		requestMethod = document.exitFullscreen || document.webkitCancelFullScreen || document.mozCancelFullScreen;
+		if (requestMethod) {
+			requestMethod.call(document);
+		}
 	}
 }
 
@@ -250,11 +279,10 @@ function navigate(dst) {
 			document.getElementById("sensors").className = "other_menu_item";
 			document.getElementById("image").innerHTML = 
 				"<img id=\"mjpeg\" alt=\"MJPEG\" src=\"video/mjpeg\"" +
-					"onload=\"fitWidth=true; setImageSize()\"" +
 					"onclick=\"fitWidth=!fitWidth; setImageSize()\"/>" +
           		"<div class=\"topright\">" +
 					"<img class=\"opacity\" alt=\"FULLSCREEN\" src=\"images/fullscreen.png\"" +
-					"onclick=\"enterFullScreen()\"/>" +
+					"onclick=\"toggleFullScreen()\"/>" +
 				"</div>" +
 				"<div class=\"bottomright\">" +
 					"<img class=\"opacity\" alt=\"TORCH\" src=\"images/torch.png\"" +
@@ -266,6 +294,7 @@ function navigate(dst) {
 					"<img class=\"opacity\" alt=\"ZOOM+\" src=\"images/zoom_in.png\"" +
 					"onmousedown=\"startZoomIn()\" onmouseup=\"stopZoom()\" onmouseleave=\"stopZoom()\"/>" +
 				"</div>";
+				setImageSize();
 			break;
 		case "map":
 			if (mapReady) {
