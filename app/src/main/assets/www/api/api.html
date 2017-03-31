@@ -34,6 +34,40 @@
     <p><em><strong>spyNet Camera</strong></em> implements an API that allows a better integration with clients or services.</p>
   </div>
   <div>
+    <h2>Streams</h2>
+    <div class="api_entry">
+      <h3>MJPEG</h3>
+      <p><code>http://&lt;ipaddress&gt;:&lt;port&gt;/video/mjpeg</code></p>
+      <p><code>http://&lt;ipaddress&gt;:&lt;port&gt;/video/mjpeg?fps=&lt;fps&gt;</code></p>
+      <p>Plays the MJPEG video stream.</p>
+      <dl>
+        <dt>
+          <p><code>fps</code> (double) - the desired framerate in frames per seconds</p>
+        </dt>
+      </dl>
+      <p>Note: for compatibility, the following aliases are also supported:</p>
+      <p><code>/mjpeg</code></p>
+      <p><code>/live/mjpeg</code></p>
+      <p><code>/video.mjpg</code></p>
+      <p><code>/mjpg/video.mjpg</code></p>
+      <p><code>/live/0/mjpeg.jpg</code></p>
+      <p><code>/live/0/mjpeg.sdp</code></p>
+    </div>
+    <br>
+    <div class="api_entry">
+      <h3>RTSP</h3>
+      <p><code>rtsp://&lt;ipaddress&gt;:&lt;port&gt;/video/h264</code></p>
+      <p>Plays the AAC/H264 audio/video stream.</p>
+      <p>Note: for compatibility, the following aliases are also supported:</p>
+      <p><code>/h264</code></p>
+      <p><code>/H264</code></p>
+      <p><code>/live</code></p>
+      <p><code>/live.sdp</code></p>
+      <p><code>/live/h264</code></p>
+      <p><code>/live/0/h264.sdp</code></p>
+    </div>
+  </div>
+  <div>
     <h2>Status request</h2>
     <div>
       <p>It is possible to query the device for some internal status by sending a GET request to the server.

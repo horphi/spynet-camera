@@ -1077,4 +1077,3 @@ public class MainActivity
 
 // TODO: log displaying incoming connections and streams requests
 // TODO: sensor tab: temperature, ...
-// TODO: check latest google compat library (com.takisoft.fix:preference still needed?)
