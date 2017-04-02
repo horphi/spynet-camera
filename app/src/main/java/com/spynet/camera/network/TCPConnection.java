@@ -58,6 +58,8 @@ public class TCPConnection implements Closeable {
     private final OutputStream mOutputStream;           // The output stream
     private final Future<?> mFuture;                    // Future that represents the task
 
+    private String mUserAgent;                          // The user-agent
+
     /**
      * Defines the interface that the client has to implement to handle the connection.
      */
@@ -147,6 +149,24 @@ public class TCPConnection implements Closeable {
      */
     public InetAddress getLocalAddress() {
         return mSocket.getLocalAddress();
+    }
+
+    /**
+     * Stores the user-agent.
+     *
+     * @param userAgent user-agent
+     */
+    public void setUserAgent(String userAgent) {
+        mUserAgent = userAgent;
+    }
+
+    /**
+     * Stores the user-agent.
+     *
+     * @return the user-agent previously saved with {@code setUserAgent()}
+     */
+    public String getUserAgent() {
+        return mUserAgent;
     }
 
     /**

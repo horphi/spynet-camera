@@ -28,7 +28,7 @@ import android.provider.BaseColumns;
  */
 public final class ConnectionsContract {
 
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     public static final String DATABASE_NAME = "Connections.db";
 
     /**
@@ -43,18 +43,28 @@ public final class ConnectionsContract {
     public static class ConnectionsTable implements BaseColumns {
 
         public static final String TABLE_NAME = "connections";
-        public static final String COLUMN_NAME_HOST = "host";   // The remote host IP address or name
-        public static final String COLUMN_NAME_START = "start"; // The start timestamp
-        public static final String COLUMN_NAME_STOP = "stop";   // The stop timestamp
-        public static final String COLUMN_NAME_INFO = "info";   // Extra information
+        // The remote host IP address or name
+        public static final String COLUMN_NAME_HOST = "host";
+        // The user-agent
+        public static final String COLUMN_NAME_USERAGENT = "userAgent";
+        // Extra information
+        public static final String COLUMN_NAME_INFO = "info";
+        // The stream ID
+        public static final String COLUMN_NAME_STREAM = "streamID";
+        // The start timestamp
+        public static final String COLUMN_NAME_START = "start";
+        // The stop timestamp
+        public static final String COLUMN_NAME_STOP = "stop";
 
         static final String SQL_CREATE_TABLE =
                 "CREATE TABLE " + TABLE_NAME + " (" +
                         _ID + " INTEGER PRIMARY KEY," +
                         COLUMN_NAME_HOST + " TEXT," +
+                        COLUMN_NAME_USERAGENT + " TEXT," +
+                        COLUMN_NAME_INFO + " TEXT," +
+                        COLUMN_NAME_STREAM + " INTEGER," +
                         COLUMN_NAME_START + " INTEGER," +
-                        COLUMN_NAME_STOP + " INTEGER, " +
-                        COLUMN_NAME_INFO + " TEXT)";
+                        COLUMN_NAME_STOP + " INTEGER)";
 
         static final String SQL_DELETE_TABLE =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;

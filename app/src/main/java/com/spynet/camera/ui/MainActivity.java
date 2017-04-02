@@ -1075,5 +1075,4 @@ public class MainActivity
     }
 }
 
-// TODO: log displaying incoming connections and streams requests
 // TODO: sensor tab: temperature, ...

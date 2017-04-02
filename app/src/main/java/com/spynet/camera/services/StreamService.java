@@ -39,6 +39,7 @@ import android.widget.Toast;
 
 import com.spynet.camera.R;
 import com.spynet.camera.common.Utils;
+import com.spynet.camera.db.ConnectionsDbHelper;
 import com.spynet.camera.media.AudioData;
 
 import com.spynet.camera.media.CameraInfo;
@@ -75,6 +76,9 @@ public class StreamService extends Service
     public static final int STOP_REQUEST_ID = 8465868;
 
     private static final int FOREGROUND_NOTIFICATION_ID = 314159;
+
+    // The maximum connections log depth in milliseconds
+    private static final long LOG_MAX_DEPTH = 30L * 24L * 60L * 60L * 1000L;
 
     protected final String TAG = getClass().getSimpleName();
 
@@ -581,7 +585,7 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onStreamStarted(String host, String type, long id) {
+    public void onStreamStarted(String host, String userAgent, String type, long id) {
         int streams = 0;
         int audio = 0;
         int mjpeg = 0;
@@ -613,10 +617,17 @@ public class StreamService extends Service
                 Log.e(TAG, "failed to notify stream started", e);
             }
         }
+        // Log the connection
+        ConnectionsDbHelper dbHelper = new ConnectionsDbHelper(this);
+        long timestamp = System.currentTimeMillis();
+        dbHelper.log(host, userAgent,
+                String.format(getString(R.string.log_connections_stream_info), type.toUpperCase()),
+                id, timestamp, 0);
+        dbHelper.drop(timestamp - LOG_MAX_DEPTH);
     }
 
     @Override
-    public void onStreamStopped(String host, String type, long id) {
+    public void onStreamStopped(String host, String userAgent, String type, long id) {
         int streams = 0;
         int audio = 0;
         int mjpeg = 0;
@@ -648,6 +659,9 @@ public class StreamService extends Service
                 Log.e(TAG, "failed to notify stream stopped", e);
             }
         }
+        // Log the connection
+        ConnectionsDbHelper dbHelper = new ConnectionsDbHelper(this);
+        dbHelper.log(host, id, System.currentTimeMillis());
     }
 
     @Override

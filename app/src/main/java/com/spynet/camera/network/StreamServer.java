@@ -123,20 +123,22 @@ public class StreamServer
         /**
          * Notifies that a new stream has started.
          *
-         * @param host the remote host
-         * @param type the stream type
-         * @param id   the stream id
+         * @param host      the remote host
+         * @param userAgent the user-agent
+         * @param type      the stream type
+         * @param id        the stream id
          */
-        void onStreamStarted(String host, String type, long id);
+        void onStreamStarted(String host, String userAgent, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
          *
-         * @param host the remote host
-         * @param type the stream type
-         * @param id   the stream id
+         * @param host      the remote host
+         * @param userAgent the user-agent
+         * @param type      the stream type
+         * @param id        the stream id
          */
-        void onStreamStopped(String host, String type, long id);
+        void onStreamStopped(String host, String userAgent, String type, long id);
 
         /**
          * Notifies that an action has been requested by a client.
@@ -431,6 +433,11 @@ public class StreamServer
                 }
             }
 
+            // Store the user-agent
+            if (headers.containsKey("user-agent")) {
+                connection.setUserAgent(headers.get("user-agent"));
+            }
+
             // Read the content to flush the input stream
             // Note: 32767 is the dummy size of the RTSP over HTTP POST request content
             int contentLength = Utils.tryParseInt(headers.get("content-length"), 0);
@@ -663,8 +670,9 @@ public class StreamServer
         String host = connection.getInetAddress() != null ?
                 connection.getInetAddress().getHostName() :
                 null;
+        String userAgent = connection.getUserAgent();
         if (mCallback != null)
-            mCallback.onStreamStarted(host, type, id);
+            mCallback.onStreamStarted(host, userAgent, type, id);
         Log.v(TAG, "stream started on connection " + connection.toString());
     }
 
@@ -674,8 +682,9 @@ public class StreamServer
         String host = connection.getInetAddress() != null ?
                 connection.getInetAddress().getHostName() :
                 null;
+        String userAgent = connection.getUserAgent();
         if (mCallback != null)
-            mCallback.onStreamStopped(host, type, id);
+            mCallback.onStreamStopped(host, userAgent, type, id);
         Log.v(TAG, "stream stopped on connection " + connection.toString());
     }
 

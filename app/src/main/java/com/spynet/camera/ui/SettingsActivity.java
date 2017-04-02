@@ -782,6 +782,18 @@ public class SettingsActivity
                     }
                 });
             }
+            // Setup the change listener to show the connection log
+            preference = findPreference("pref_server_log_show");
+            if (preference != null) {
+                preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        Intent intent = new Intent(getActivity(), ConnectionsLogActivity.class);
+                        startActivity(intent);
+                        return true;
+                    }
+                });
+            }
             // Setup the change listener to get help about Angelcam
             preference = findPreference("pref_angel_whatis");
             if (preference != null) {

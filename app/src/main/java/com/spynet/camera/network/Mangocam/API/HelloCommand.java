@@ -84,6 +84,7 @@ public class HelloCommand implements MangocamCommand {
     private int mPIN = 0;
     private int mKeepAlive = MangocamAPI.KEEPALIVE_INTERVAL;
     private ArrayList<String> mHosts = new ArrayList<>();
+    private String mVersion;
     private String mErrorMessage = "";
     private int mErrorCode = 0;
     private String mLink = "";
@@ -124,6 +125,9 @@ public class HelloCommand implements MangocamCommand {
                         break;
                     case "keepalive":
                         mKeepAlive = jr.nextInt();
+                        break;
+                    case "version":
+                        mVersion = String.valueOf(jr.nextDouble());
                         break;
                     case "servers":
                         jr.beginArray();
@@ -211,6 +215,13 @@ public class HelloCommand implements MangocamCommand {
      */
     public int getKeepAliveInterval() {
         return mKeepAlive;
+    }
+
+    /**
+     * @return the protocol version
+     */
+    public String getVersion() {
+        return mVersion;
     }
 
     /**

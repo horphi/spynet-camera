@@ -21,6 +21,7 @@
 
 package com.spynet.camera.db;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -54,5 +55,62 @@ public class ConnectionsDbHelper extends SQLiteOpenHelper {
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
+    }
+
+    /**
+     * Creates a new entry in the database.
+     *
+     * @param host           the remote host IP address or name
+     * @param userAgent      the user-agent
+     * @param info           additional information
+     * @param streamID       the ID of the stream (0 if this is not a stream log)
+     * @param startTimestamp the start timestamp
+     * @param stopTimestamp  the stop timestamp (0 if not yet available)
+     */
+    public void log(String host, String userAgent, String info,
+                    long streamID, long startTimestamp, long stopTimestamp) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues entry = new ContentValues();
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST, host);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT, userAgent);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_INFO, info);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STREAM, streamID);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_START, startTimestamp);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP, stopTimestamp);
+        db.insert(ConnectionsContract.ConnectionsTable.TABLE_NAME, null, entry);
+        db.close();
+    }
+
+    /**
+     * Adds the stop timestamp to a previously logged entry.
+     *
+     * @param host          the remote host that started the connection
+     * @param streamID      the ID of the stream
+     * @param stopTimestamp the stop timestamp
+     */
+    public void log(String host, long streamID, long stopTimestamp) {
+        if (host == null || host.isEmpty() || streamID == 0 || stopTimestamp == 0)
+            throw new IllegalArgumentException();
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues entry = new ContentValues();
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP, stopTimestamp);
+        db.update(ConnectionsContract.ConnectionsTable.TABLE_NAME, entry,
+                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST + " = ? AND " +
+                        ConnectionsContract.ConnectionsTable.COLUMN_NAME_STREAM + " = ?",
+                new String[]{host, String.valueOf(streamID)});
+        db.close();
+    }
+
+    /**
+     * Drops the entries that are older than the specified timestamp.
+     *
+     * @param timestamp the timestamp
+     */
+    public void drop(long timestamp) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(ConnectionsContract.ConnectionsTable.TABLE_NAME,
+                ConnectionsContract.ConnectionsTable.COLUMN_NAME_START + " < ?",
+                new String[]{String.valueOf(timestamp)});
+        db.close();
     }
 }

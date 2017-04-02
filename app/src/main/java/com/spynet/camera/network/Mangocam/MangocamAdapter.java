@@ -88,6 +88,7 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     private final int mImageWidth;                      // Image width
     private final int mImageHeight;                     // Image height
     private MangocamAdapterCallback mCallback;          // The callback to notify the client
+    private String mProtocolVersion;                    // The protocol version
     private List<String> mHosts;                        // List of known hosts
     private int mHostIndex;                             // Index of the next host to use
     private long mStartTime;                            // Start time in milliseconds
@@ -106,20 +107,22 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
         /**
          * Notifies that a new stream has started.
          *
-         * @param host the remote host
-         * @param type the stream type
-         * @param id   the stream id
+         * @param host      the remote host
+         * @param userAgent the user-agent
+         * @param type      the stream type
+         * @param id        the stream id
          */
-        void onStreamStarted(String host, String type, long id);
+        void onStreamStarted(String host, String userAgent, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
          *
-         * @param host the remote host
-         * @param type the stream type
-         * @param id   the stream id
+         * @param host      the remote host
+         * @param userAgent the user-agent
+         * @param type      the stream type
+         * @param id        the stream id
          */
-        void onStreamStopped(String host, String type, long id);
+        void onStreamStopped(String host, String userAgent, String type, long id);
 
         /**
          * Notifies that an adapter has connected to its server.
@@ -335,6 +338,8 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
                         mContext.getString(R.string.mango_notify_connected_title),
                         host,
                         null);
+                // Save the protocol version
+                mProtocolVersion = helloCmd.getVersion();
                 // Save the list of available hosts
                 if (helloCmd.getHosts().size() > 0)
                     SettingsActivity.setMangoServers(mContext, helloCmd.getHosts());
@@ -652,8 +657,10 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
         String host = connection.getInetAddress() != null ?
                 connection.getInetAddress().getHostName() :
                 null;
+        String userAgent = "Mangocam" +
+                (mProtocolVersion != null ? " v" + mProtocolVersion : "");
         if (mCallback != null)
-            mCallback.onStreamStarted(host, type, id);
+            mCallback.onStreamStarted(host, userAgent, type, id);
         Log.d(TAG, "upload started, type " + type + ", id " + id);
     }
 
@@ -663,8 +670,10 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
         String host = connection.getInetAddress() != null ?
                 connection.getInetAddress().getHostName() :
                 null;
+        String userAgent = "Mangocam" +
+                (mProtocolVersion != null ? " v" + mProtocolVersion : "");
         if (mCallback != null)
-            mCallback.onStreamStopped(host, type, id);
+            mCallback.onStreamStopped(host, userAgent, type, id);
         Log.d(TAG, "upload stopped, type " + type + ", id " + id);
     }
 

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ This file is part of spyNet Camera, the Android IP camera
   ~
   ~ Copyright (C) 2016-2017 Paolo Dematteis
@@ -143,6 +142,10 @@
                 android:key="pref_server_wifionly"
                 android:summary="@string/pref_server_wifionly_summ"
                 android:title="@string/pref_server_wifionly" />
+            <com.spynet.camera.ui.EditTextLockedPreference
+                android:icon="@drawable/ic_history"
+                android:key="pref_server_log_show"
+                android:title="@string/pref_server_log_show" />
         </PreferenceScreen>
         <PreferenceScreen
             android:icon="@drawable/ic_account"
