@@ -28,8 +28,8 @@ android {
         applicationId "com.spynet.camtest"
         minSdkVersion 17
         targetSdkVersion 23
-        versionCode 39
-        versionName '2.4.8'
+        versionCode 40
+        versionName '2.4.9'
     }
     buildTypes {
         release {
