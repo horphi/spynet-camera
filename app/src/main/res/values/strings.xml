@@ -141,7 +141,7 @@
     <string name="pref_server_upnp_summ">Set the port forwarding on the router</string>
     <string name="pref_server_wifionly">WiFi only</string>
     <string name="pref_server_wifionly_summ">Disallow streaming using the mobile data connection</string>
-    <string name="pref_server_log_show">Show log</string>
+    <string name="pref_server_log_show">Show connection log</string>
     <string name="pref_title_authentication">Authentication</string>
     <string name="pref_server_authenticate">Enable authentication</string>
     <string name="pref_server_username">Username</string>

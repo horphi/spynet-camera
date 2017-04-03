@@ -136,7 +136,7 @@
     <string name="pref_server_upnp_summ">Imposta il port forwarding sul router</string>
     <string name="pref_server_wifionly">Solo WiFi</string>
     <string name="pref_server_wifionly_summ">Non consentire la trasmissione sulla rete dati</string>
-    <string name="pref_server_log_show">Visualizza log</string>
+    <string name="pref_server_log_show">Visualizza log connessioni</string>
     <string name="pref_title_authentication">Autenticazione</string>
     <string name="pref_server_authenticate">Abilita l\'autenticazione</string>
     <string name="pref_server_username">Nome utente</string>
