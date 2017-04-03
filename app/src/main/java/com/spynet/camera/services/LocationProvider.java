@@ -65,8 +65,8 @@ public class LocationProvider implements Closeable, LocationListener {
     private final Timer mTimeoutTimer;                  // The timer used to switch back to coarse mode
     private LocationCallback mCallback;                 // The LocationCallback implemented by mContext
     private Location mCurrentLocation;                  // Last known location
-    private volatile boolean mIsFineMode;               // Whether the fine location is active
-    private volatile int mFineRequestsNum;              // The number of fine location requests (since last check)
+    private boolean mIsFineMode;                        // Whether the fine location is active
+    private int mFineRequestsNum;                       // The number of fine location requests (since last check)
 
     /**
      * A client may implement this interface to receive location information as they are available.

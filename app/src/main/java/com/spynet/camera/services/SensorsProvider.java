@@ -36,27 +36,22 @@ import java.util.TimerTask;
 
 /**
  * Defines the provider that will notify the client on sensors values changes.<br>
- * It handles two different update modes: coarse (default) and fine.<br>
- * 'coarse' is for power-saving, while 'fine' is for accuracy.<br>
- * It is possible to switch between the two modes, but the coarse mode will be automatically
- * selected if no new requests are received for the fine mode within a predefined timeout time.
+ * Sensors are automatically disabled if no new requests are received
+ * within a predefined timeout time.
  */
 public class SensorsProvider implements Closeable, SensorEventListener {
 
-    // Sampling rate in microseconds
-    private static final int SENSOR_DELAY_COARSE = 10 * 1000 * 1000;
-    private static final int SENSOR_DELAY_FINE = 1000 * 1000;
     // The fine mode timeout, in milliseconds
     private static final int FINE_TIMEOUT = 30 * 1000;
 
     protected final String TAG = getClass().getSimpleName();
 
-    private final Context mContext;                     // The context that uses the SensorsProvider
-    private final SensorManager mSensorManager;         // The sensor manager
-    private final Timer mTimeoutTimer;                  // The timer used to switch back to coarse mode
-    private SensorsCallback mCallback;                  // The SensorsCallback implemented by mContext
-    private volatile boolean mIsFineMode;               // Whether the fine location is active
-    private volatile int mFineRequestsNum;              // The number of fine location requests (since last check)
+    private final Context mContext;                 // The context that uses the SensorsProvider
+    private final SensorManager mSensorManager;     // The sensor manager
+    private final Timer mTimeoutTimer;              // The timer used to switch back to coarse mode
+    private SensorsCallback mCallback;              // The SensorsCallback implemented by mContext
+    private boolean mIsActive;                      // Whether the provider is active
+    private int mRequestsNum;                       // The number of requests (since last check)
 
     /**
      * A client may implement this interface to receive sensors values as they are available.
@@ -65,10 +60,10 @@ public class SensorsProvider implements Closeable, SensorEventListener {
         /**
          * Called when a new value is available for the specified sensor.
          *
-         * @param sensorType the type of sensor
-         * @param value      the sensor value
+         * @param type  the type of sensor
+         * @param value the sensor value
          */
-        void onSensorValueAvailable(int sensorType, float value);
+        void onValueAvailable(int type, float value);
     }
 
     /**
@@ -85,17 +80,16 @@ public class SensorsProvider implements Closeable, SensorEventListener {
             Log.w(TAG, "SensorsCallback is not implemented by the specified context");
         }
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
-        mIsFineMode = true; // allow requestCoarseUpdates() to execute
-        requestCoarseUpdates();
+        mIsActive = false;
         mTimeoutTimer = new Timer();
         mTimeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 synchronized (SensorsProvider.this) {
-                    if (mFineRequestsNum == 0 && mIsFineMode) {
-                        requestCoarseUpdates();
+                    if (mRequestsNum == 0 && mIsActive) {
+                        stop();
                     }
-                    mFineRequestsNum = 0;
+                    mRequestsNum = 0;
                 }
             }
         }, FINE_TIMEOUT, FINE_TIMEOUT);
@@ -113,7 +107,7 @@ public class SensorsProvider implements Closeable, SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (mCallback != null) {
-            mCallback.onSensorValueAvailable(event.sensor.getType(), event.values[0]);
+            mCallback.onValueAvailable(event.sensor.getType(), event.values[0]);
         }
     }
 
@@ -123,34 +117,40 @@ public class SensorsProvider implements Closeable, SensorEventListener {
     }
 
     /**
-     * Sets location updates for power saving.
+     * Starts the monitor.
      */
-    public void requestCoarseUpdates() {
+    public synchronized void start() {
         synchronized (this) {
-            if (!mIsFineMode)
+            mRequestsNum++;
+            if (mIsActive)
                 return;
-            mIsFineMode = false;
-            mFineRequestsNum = 0;
+            mIsActive = true;
         }
-        mSensorManager.unregisterListener(this);
-        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        Sensor sensor;
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         if (sensor != null)
-            mSensorManager.registerListener(this, sensor, SENSOR_DELAY_COARSE);
+            mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+        if (sensor != null)
+            mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        if (sensor != null)
+            mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        if (sensor != null)
+            mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     /**
-     * Sets location updates for better performance.
+     * Stops the monitor.
      */
-    public synchronized void requestFineUpdates() {
+    public void stop() {
         synchronized (this) {
-            mFineRequestsNum++;
-            if (mIsFineMode)
+            if (!mIsActive)
                 return;
-            mIsFineMode = true;
+            mIsActive = false;
+            mRequestsNum = 0;
         }
         mSensorManager.unregisterListener(this);
-        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        if (sensor != null)
-            mSensorManager.registerListener(this, sensor, SENSOR_DELAY_FINE);
     }
 }

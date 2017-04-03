@@ -796,6 +796,14 @@ public class StreamService extends Service
                         mLocationProvider.requestCoarseUpdates();
                 }
                 break;
+            // Trigger the sensors
+            case "sensors":
+                // TODO: update the doc
+                if (mSensorsProvider != null) {
+                    if (params.equals("trigger"))
+                        mSensorsProvider.start();
+                }
+                break;
             // Unhandled
             default:
                 Log.w(TAG, "unhandled control request: " + action + " (" + params + ")");
@@ -955,9 +963,12 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onSensorValueAvailable(int sensorType, float value) {
-        // TODO
-        Log.d(TAG, "onSensorValueAvailable: " + sensorType + "=" + value);
+    public void onValueAvailable(int type, float value) {
+        // Forward the value
+        synchronized (mServerLock) {
+            if (mStreamServer != null)
+                mStreamServer.setSensor(type, value);
+        }
     }
 
     @Override

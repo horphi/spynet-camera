@@ -24,6 +24,7 @@ package com.spynet.camera.network;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
 import android.location.Location;
 import android.os.BatteryManager;
 import android.support.annotation.Nullable;
@@ -99,6 +100,8 @@ public class StreamServer
     private final Context mContext;                 // The context that uses the StreamServer
     private final ConcurrentHashMap<Long, String>   // Thread-safe streams list
             mStreams;                               //
+    private final ConcurrentHashMap<Integer, Float> // Thread-safe sensors list
+            mSensors;                               //
     private final TCPListener mTcpListener;         // Listener
     private final String mCredentials;              // The authentication credentials
     private final DDNSClient mDDNSClient;           // The DDNS client
@@ -175,6 +178,12 @@ public class StreamServer
         mTunnelCache = new TimeoutCache<>();
         mStreams = new ConcurrentHashMap<>();
         mTcpListener = new TCPListener(port, this);
+        // Setup the sensors table
+        mSensors = new ConcurrentHashMap<>();
+        mSensors.put(Sensor.TYPE_AMBIENT_TEMPERATURE, 9999.0f);
+        mSensors.put(Sensor.TYPE_RELATIVE_HUMIDITY, 9999.0f);
+        mSensors.put(Sensor.TYPE_PRESSURE, 9999.0f);
+        mSensors.put(Sensor.TYPE_LIGHT, 9999.0f);
         // Setup the DDNS client
         if (SettingsActivity.getServerUpdateDDNS(mContext)) {
             String hostname = SettingsActivity.getServerDDNSHostname(mContext);
@@ -285,6 +294,14 @@ public class StreamServer
      */
     public synchronized void setLocation(Location location) {
         mLastLocation = location;
+    }
+
+    /**
+     * Sets the value for a sensor.
+     */
+    public synchronized void setSensor(int type, float value) {
+        if (mSensors.containsKey(type))
+            mSensors.put(type, value);
     }
 
     /**
@@ -1024,7 +1041,12 @@ public class StreamServer
                     .put("battery", new JSONObject()
                             .put("connection", batteryCharge)
                             .put("level", (int) batteryPct))
-                    .put("torch", mTorchOn);
+                    .put("torch", mTorchOn)
+                    .put("temperature", mSensors.get(Sensor.TYPE_AMBIENT_TEMPERATURE))
+                    .put("relative_humidity", mSensors.get(Sensor.TYPE_RELATIVE_HUMIDITY))
+                    .put("pressure", mSensors.get(Sensor.TYPE_PRESSURE))
+                    .put("light", mSensors.get(Sensor.TYPE_LIGHT));
+            // TODO: update doc
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");
