@@ -69,8 +69,7 @@ public class LocationProvider implements Closeable, LocationListener {
     private volatile int mFineRequestsNum;              // The number of fine location requests (since last check)
 
     /**
-     * A client may implement this interface to receive audio and video data buffers
-     * as they are available.
+     * A client may implement this interface to receive location information as they are available.
      */
     public interface LocationCallback {
         /**
@@ -137,7 +136,7 @@ public class LocationProvider implements Closeable, LocationListener {
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.v(TAG, "location status hanged: " + provider + "=" + status);
+        Log.v(TAG, "location status changed: " + provider + "=" + status);
     }
 
     @Override

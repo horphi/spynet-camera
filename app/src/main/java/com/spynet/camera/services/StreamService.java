@@ -69,7 +69,8 @@ public class StreamService extends Service
         MangocamAdapter.MangocamAdapterCallback,
         AngelcamAdapter.AngelcamAdapterCallback,
         ConnectivityMonitor.ConnectivityCallback,
-        LocationProvider.LocationCallback {
+        LocationProvider.LocationCallback,
+        SensorsProvider.SensorsCallback {
 
     public static final String ACTION_STOP_SERVICE = "com.spynet.camera.services.STOP_SERVICE";
     public static final int SHOW_REQUEST_ID = 9536464;
@@ -97,6 +98,7 @@ public class StreamService extends Service
     private BroadcastReceiver mControlReceiver;         // The BroadcastReceiver to control the service
     private ConnectivityMonitor mConnectivityMonitor;   // The connectivity monitor
     private LocationProvider mLocationProvider;         // The location provider
+    private SensorsProvider mSensorsProvider;           // The sensors provider
     private Location mLocation;                         // Last known location
     private volatile boolean mWiFiAvailable;            // Indicates that the WiFi is available
     private volatile boolean mMobileAvailable;          // Indicates that the mobile data is available
@@ -458,6 +460,9 @@ public class StreamService extends Service
         // Start the LocationProvider
         mLocationProvider = new LocationProvider(this);
 
+        // Start the SensorsProvider
+        mSensorsProvider = new SensorsProvider(this);
+
         // Register the BroadcastReceiver to control the service
         IntentFilter filter = new IntentFilter(ACTION_STOP_SERVICE);
         mControlReceiver = new BroadcastReceiver() {
@@ -487,6 +492,10 @@ public class StreamService extends Service
         // Stop the LocationProvider
         if (mLocationProvider != null)
             mLocationProvider.close();
+
+        // Stop the SensorsProvider
+        if (mSensorsProvider != null)
+            mSensorsProvider.close();
 
         // Stop the ConnectivityMonitor
         if (mConnectivityMonitor != null)
@@ -943,6 +952,12 @@ public class StreamService extends Service
             if (mStreamServer != null)
                 mStreamServer.setLocation(location);
         }
+    }
+
+    @Override
+    public void onSensorValueAvailable(int sensorType, float value) {
+        // TODO
+        Log.d(TAG, "onSensorValueAvailable: " + sensorType + "=" + value);
     }
 
     @Override
