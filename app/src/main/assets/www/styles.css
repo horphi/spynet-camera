@@ -370,3 +370,24 @@ img.opacity:hover {
 	background-color: #FFBABA;
 	background-image: url('images/error.png');
 }
+table.sensors {
+	width: 100%;
+    padding: 10px;
+	border-spacing: 5px;
+}
+table.sensors tr:nth-child(even) {
+    background-color: #eee;
+}
+table.sensors tr:nth-child(odd) {
+    background-color: #fff;
+}
+table.sensors td {
+    padding: 10px;
+	text-align: left;
+}
+table.sensors td.value {
+    width: 30%;
+}
+table.sensors td.unit{
+    width: 20%;
+}

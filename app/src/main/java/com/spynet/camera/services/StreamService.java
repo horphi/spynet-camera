@@ -798,7 +798,6 @@ public class StreamService extends Service
                 break;
             // Trigger the sensors
             case "sensors":
-                // TODO: update the doc
                 if (mSensorsProvider != null) {
                     if (params.equals("trigger"))
                         mSensorsProvider.start();

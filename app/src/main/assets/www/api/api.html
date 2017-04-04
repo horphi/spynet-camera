@@ -146,6 +146,7 @@
       <h3>Sensors</h3>
       <p><code>http://&lt;ipaddress&gt;:&lt;port&gt;/sensors</code></p>
       <p>Returns the sensors's status.</p>
+      <p>Note: if the headers contain <i>sensors: trigger</i>, the device's sensors acquisition will be triggered.</p>
       <dl>
         <dt>
           <p><code>battery</code> (object) - the battery object</p>
@@ -162,6 +163,10 @@
         </dd>
         <dt>
           <p><code>torch</code> (boolean) - whether the torch is turned on</p>
+          <p><code>temperature</code> (float) - ambient air temperature in °C (9999 if not available)</p>
+          <p><code>humidity</code> (float) - ambient relative humidity in % (9999 if not available)</p>
+          <p><code>pressure</code> (float) - ambient air pressure in hPa or mbar (9999 if not available)</p>
+          <p><code>light</code> (float) - Illuminance in lx (9999 if not available)</p>
         </dt>
       </dl>
     </div>
@@ -294,6 +299,12 @@
           <p><code>mode</code> (string) - either <i>fine</i> or <i>coarse</i></p>
         </dt>
       </dl>
+    </div>
+    <br>
+    <div class="api_entry">
+      <h3>Sensors</h3>
+      <p><code>sensors=trigger</code></p>
+      <p>Trigger the device's sensors acquisition, that will stop after a timeout if no other requests are sent.</p>
     </div>
   </div>
 </div>

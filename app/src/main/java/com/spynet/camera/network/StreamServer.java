@@ -571,6 +571,9 @@ public class StreamServer
                                     return;
                                 // Sensors information
                                 case "/sensors":
+                                    String sensors = headers.get("sensors");
+                                    if (sensors != null && mCallback != null)
+                                        mCallback.onControlRequest("sensors", sensors);
                                     sendSensorsInfos(connection);
                                     return;
                                 // Supported video streams list
@@ -1043,10 +1046,9 @@ public class StreamServer
                             .put("level", (int) batteryPct))
                     .put("torch", mTorchOn)
                     .put("temperature", mSensors.get(Sensor.TYPE_AMBIENT_TEMPERATURE))
-                    .put("relative_humidity", mSensors.get(Sensor.TYPE_RELATIVE_HUMIDITY))
+                    .put("humidity", mSensors.get(Sensor.TYPE_RELATIVE_HUMIDITY))
                     .put("pressure", mSensors.get(Sensor.TYPE_PRESSURE))
                     .put("light", mSensors.get(Sensor.TYPE_LIGHT));
-            // TODO: update doc
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");

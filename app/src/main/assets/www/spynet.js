@@ -4,6 +4,7 @@ var map = null;
 var camMarker = null;
 var camAccuracy = null;
 var locationTimer = null;
+var sensorsTimer = null;
 var lastLocationUpdate = 0;
 var autoCenter = false;
 var fitWidth = true;
@@ -130,7 +131,7 @@ function getSensors() {
 			} else {
 				battery.style.visibility = "hidden";
 				torch.style.visibility = "hidden";
-				setTimeout(getSensors, 5000);
+				setTimeout(getSensors, 10000);
 			}
 		}
 	};
@@ -182,6 +183,32 @@ function getLocation() {
 	};
 	xhttp.open("GET", "status", true);
 	xhttp.setRequestHeader("GPS-mode", "fine");
+	xhttp.send();
+}
+
+function getMoreSensors() {
+	"use strict";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState === 4) {
+			if (xhttp.status === 200) {
+				var json = JSON.parse(xhttp.responseText);
+				var temperature = document.getElementById("temperature");
+				temperature.innerHTML = json.temperature === 9999 ? "-" : json.temperature;
+				var pressure = document.getElementById("pressure");
+				pressure.innerHTML = json.pressure === 9999 ? "-" : json.pressure;
+				var humidity = document.getElementById("humidity");
+				humidity.innerHTML = json.humidity === 9999 ? "-" : json.humidity;
+				var light = document.getElementById("light");
+				light.innerHTML = json.light === 9999 ? "-" : json.light;
+				sensorsTimer = setTimeout(getMoreSensors, 2500);
+			} else {
+				sensorsTimer = setTimeout(getMoreSensors, 10000);
+			}
+		}
+	};
+	xhttp.open("GET", "sensors", true);
+	xhttp.setRequestHeader("sensors", "trigger");
 	xhttp.send();
 }
 
@@ -268,6 +295,10 @@ function navigate(dst) {
 	if (locationTimer !== null) {
 		clearTimeout(locationTimer);
 		locationTimer = null;
+	}
+	if (sensorsTimer !== null) {
+		clearTimeout(sensorsTimer);
+		sensorsTimer = null;
 	}
 	map = null;
 	camMarker = null;
@@ -376,7 +407,30 @@ function navigate(dst) {
 			document.getElementById("live").className = "other_menu_item";
 			document.getElementById("map").className = "other_menu_item";
 			document.getElementById("sensors").className = "active_menu_item";
-			document.getElementById("image").innerHTML = "SENSORS";
+			document.getElementById("image").innerHTML = 
+				"<table class=\"sensors\">" + 
+					"<tr>" +
+						"<td>Temperature</td>" +
+						"<td class=\"value\" id=\"temperature\">-</td>" +
+						"<td class=\"unit\">°C</td>" +
+					"</tr>" +
+					"<tr>" +
+						"<td>Pressure</td>" +
+						"<td class=\"value\" id=\"pressure\">-</td>" +
+						"<td class=\"unit\">mbar</td>" +
+					"</tr>" +
+					"<tr>" +
+						"<td>Relative humidity</td>" +
+						"<td class=\"value\" id=\"humidity\">-</td>" +
+						"<td class=\"unit\">%</td>" +
+					"</tr>" +
+					"<tr>" +
+						"<td>Illuminance</td>" +
+						"<td class=\"value\" id=\"light\">-</td>" +
+						"<td class=\"unit\">lx</td>" +
+					"</tr>" +
+				"</table>";
+			sensorsTimer = setTimeout(getMoreSensors, 1000);
 			break;
 	}
 }
