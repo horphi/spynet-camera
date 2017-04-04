@@ -49,6 +49,7 @@ import org.json.JSONException;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -112,7 +113,7 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
          * @param type      the stream type
          * @param id        the stream id
          */
-        void onStreamStarted(String host, String userAgent, String type, long id);
+        void onStreamStarted(InetAddress host, String userAgent, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
@@ -122,7 +123,7 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
          * @param type      the stream type
          * @param id        the stream id
          */
-        void onStreamStopped(String host, String userAgent, String type, long id);
+        void onStreamStopped(InetAddress host, String userAgent, String type, long id);
 
         /**
          * Notifies that an adapter has connected to its server.
@@ -654,26 +655,20 @@ public class MangocamAdapter implements Closeable, StreamConnection.ConnectionCa
     @Override
     public void onStreamStarted(StreamConnection connection, String type, long id) {
         mStreams.putIfAbsent(id, type);
-        String host = connection.getInetAddress() != null ?
-                connection.getInetAddress().getHostName() :
-                null;
         String userAgent = "Mangocam" +
                 (mProtocolVersion != null ? " v" + mProtocolVersion : "");
         if (mCallback != null)
-            mCallback.onStreamStarted(host, userAgent, type, id);
+            mCallback.onStreamStarted(connection.getInetAddress(), userAgent, type, id);
         Log.d(TAG, "upload started, type " + type + ", id " + id);
     }
 
     @Override
     public void onStreamStopped(StreamConnection connection, String type, long id) {
         mStreams.remove(id);
-        String host = connection.getInetAddress() != null ?
-                connection.getInetAddress().getHostName() :
-                null;
         String userAgent = "Mangocam" +
                 (mProtocolVersion != null ? " v" + mProtocolVersion : "");
         if (mCallback != null)
-            mCallback.onStreamStopped(host, userAgent, type, id);
+            mCallback.onStreamStopped(connection.getInetAddress(), userAgent, type, id);
         Log.d(TAG, "upload stopped, type " + type + ", id " + id);
     }
 

@@ -28,7 +28,7 @@ import android.provider.BaseColumns;
  */
 public final class ConnectionsContract {
 
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
     public static final String DATABASE_NAME = "Connections.db";
 
     /**
@@ -43,8 +43,10 @@ public final class ConnectionsContract {
     public static class ConnectionsTable implements BaseColumns {
 
         public static final String TABLE_NAME = "connections";
-        // The remote host IP address or name
-        public static final String COLUMN_NAME_HOST = "host";
+        // The remote host name
+        public static final String COLUMN_NAME_HOST_NAME = "host_name";
+        // The remote host IP address
+        public static final String COLUMN_NAME_HOST_IP = "host_ip";
         // The user-agent
         public static final String COLUMN_NAME_USERAGENT = "userAgent";
         // Extra information
@@ -59,7 +61,8 @@ public final class ConnectionsContract {
         static final String SQL_CREATE_TABLE =
                 "CREATE TABLE " + TABLE_NAME + " (" +
                         _ID + " INTEGER PRIMARY KEY," +
-                        COLUMN_NAME_HOST + " TEXT," +
+                        COLUMN_NAME_HOST_NAME + " TEXT," +
+                        COLUMN_NAME_HOST_IP + " TEXT," +
                         COLUMN_NAME_USERAGENT + " TEXT," +
                         COLUMN_NAME_INFO + " TEXT," +
                         COLUMN_NAME_STREAM + " INTEGER," +

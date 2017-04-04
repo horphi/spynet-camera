@@ -56,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -594,7 +595,7 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onStreamStarted(String host, String userAgent, String type, long id) {
+    public void onStreamStarted(InetAddress host, String userAgent, String type, long id) {
         int streams = 0;
         int audio = 0;
         int mjpeg = 0;
@@ -636,7 +637,7 @@ public class StreamService extends Service
     }
 
     @Override
-    public void onStreamStopped(String host, String userAgent, String type, long id) {
+    public void onStreamStopped(InetAddress host, String userAgent, String type, long id) {
         int streams = 0;
         int audio = 0;
         int mjpeg = 0;

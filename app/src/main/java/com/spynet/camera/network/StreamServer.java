@@ -131,7 +131,7 @@ public class StreamServer
          * @param type      the stream type
          * @param id        the stream id
          */
-        void onStreamStarted(String host, String userAgent, String type, long id);
+        void onStreamStarted(InetAddress host, String userAgent, String type, long id);
 
         /**
          * Notifies that a stream has stopped.
@@ -141,7 +141,7 @@ public class StreamServer
          * @param type      the stream type
          * @param id        the stream id
          */
-        void onStreamStopped(String host, String userAgent, String type, long id);
+        void onStreamStopped(InetAddress host, String userAgent, String type, long id);
 
         /**
          * Notifies that an action has been requested by a client.
@@ -687,24 +687,16 @@ public class StreamServer
     @Override
     public void onStreamStarted(StreamConnection connection, String type, long id) {
         mStreams.putIfAbsent(id, type);
-        String host = connection.getInetAddress() != null ?
-                connection.getInetAddress().getHostName() :
-                null;
-        String userAgent = connection.getUserAgent();
         if (mCallback != null)
-            mCallback.onStreamStarted(host, userAgent, type, id);
+            mCallback.onStreamStarted(connection.getInetAddress(), connection.getUserAgent(), type, id);
         Log.v(TAG, "stream started on connection " + connection.toString());
     }
 
     @Override
     public void onStreamStopped(StreamConnection connection, String type, long id) {
         mStreams.remove(id);
-        String host = connection.getInetAddress() != null ?
-                connection.getInetAddress().getHostName() :
-                null;
-        String userAgent = connection.getUserAgent();
         if (mCallback != null)
-            mCallback.onStreamStopped(host, userAgent, type, id);
+            mCallback.onStreamStopped(connection.getInetAddress(), connection.getUserAgent(), type, id);
         Log.v(TAG, "stream stopped on connection " + connection.toString());
     }
 

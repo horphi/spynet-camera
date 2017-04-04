@@ -26,6 +26,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.net.InetAddress;
+
 /**
  * Helper class to handle the database where the incoming connections are logged.
  */
@@ -67,11 +69,12 @@ public class ConnectionsDbHelper extends SQLiteOpenHelper {
      * @param startTimestamp the start timestamp
      * @param stopTimestamp  the stop timestamp (0 if not yet available)
      */
-    public void log(String host, String userAgent, String info,
+    public void log(InetAddress host, String userAgent, String info,
                     long streamID, long startTimestamp, long stopTimestamp) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues entry = new ContentValues();
-        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST, host);
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_NAME, host.getHostName());
+        entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP, host.getHostAddress());
         entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT, userAgent);
         entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_INFO, info);
         entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STREAM, streamID);
@@ -88,16 +91,16 @@ public class ConnectionsDbHelper extends SQLiteOpenHelper {
      * @param streamID      the ID of the stream
      * @param stopTimestamp the stop timestamp
      */
-    public void log(String host, long streamID, long stopTimestamp) {
-        if (host == null || host.isEmpty() || streamID == 0 || stopTimestamp == 0)
+    public void log(InetAddress host, long streamID, long stopTimestamp) {
+        if (host == null || streamID == 0 || stopTimestamp == 0)
             throw new IllegalArgumentException();
         SQLiteDatabase db = getWritableDatabase();
         ContentValues entry = new ContentValues();
         entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP, stopTimestamp);
         db.update(ConnectionsContract.ConnectionsTable.TABLE_NAME, entry,
-                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST + " = ? AND " +
+                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP + " = ? AND " +
                         ConnectionsContract.ConnectionsTable.COLUMN_NAME_STREAM + " = ?",
-                new String[]{host, String.valueOf(streamID)});
+                new String[]{host.getHostAddress(), String.valueOf(streamID)});
         db.close();
     }
 

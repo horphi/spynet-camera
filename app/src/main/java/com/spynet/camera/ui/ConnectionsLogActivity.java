@@ -27,9 +27,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -46,8 +48,10 @@ import java.util.Date;
  */
 public class ConnectionsLogActivity extends AppCompatActivity {
 
-    SQLiteDatabase mDb;     // The connection log database
-    Cursor mCursor;         // The Cursor to browse the log database
+    private final String TAG = getClass().getSimpleName();
+
+    private SQLiteDatabase mDb;     // The connection log database
+    private Cursor mCursor;         // The Cursor to browse the log database
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +64,8 @@ public class ConnectionsLogActivity extends AppCompatActivity {
         // Create the Cursor
         String[] projection = {
                 ConnectionsContract.ConnectionsTable._ID,
-                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST,
+                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_NAME,
+                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_INFO,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_START,
@@ -81,6 +86,13 @@ public class ConnectionsLogActivity extends AppCompatActivity {
         // Set the Cursor as the ListView adapter
         ListView listview = (ListView) findViewById(R.id.list);
         listview.setAdapter(new LogCursorAdapter(this, mCursor));
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // TODO: open details Activity
+                Log.d(TAG, "onItemClick: " + id);
+            }
+        });
     }
 
     @Override
@@ -114,7 +126,9 @@ public class ConnectionsLogActivity extends AppCompatActivity {
             TextView stop = (TextView) view.findViewById(R.id.stop);
             // Extract properties from cursor
             String hostValue = cursor.getString(cursor.getColumnIndexOrThrow(
-                    ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST));
+                    ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_NAME));
+            String ipValue = cursor.getString(cursor.getColumnIndexOrThrow(
+                    ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP));
             String userAgentValue = cursor.getString(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT));
             String infoValue = cursor.getString(cursor.getColumnIndexOrThrow(
@@ -124,7 +138,7 @@ public class ConnectionsLogActivity extends AppCompatActivity {
             long stopValue = cursor.getLong(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP));
             // Populate fields with extracted properties
-            host.setText(hostValue);
+            host.setText(hostValue.equals(ipValue) ? hostValue : hostValue + " (" + ipValue + ")");
             userAgent.setText(userAgentValue);
             info.setText(infoValue);
             start.setText(SimpleDateFormat.getDateTimeInstance().format(new Date(startValue)));
