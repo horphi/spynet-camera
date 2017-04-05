@@ -1075,4 +1075,3 @@ public class MainActivity
     }
 }
 
-// TODO: sensor tab: temperature, ...

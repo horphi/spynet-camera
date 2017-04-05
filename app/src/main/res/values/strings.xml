@@ -225,5 +225,12 @@
     <string name="prompt_critical_feedback_negative_label">Not right now</string>
     <string name="prompt_thanks_title">Thanks for your feedback!</string>
     <string name="log_connections_title">Connections Log</string>
-    <string name="log_connections_stream_info">Stream type: %s</string>
+    <string name="log_connections_stream_info">%s stream</string>
+    <string name="log_connection_details_title">Connection Details</string>
+    <string name="log_connection_details_host">Host name</string>
+    <string name="log_connection_details_ip">IP address</string>
+    <string name="log_connection_details_user_agent">User agent</string>
+    <string name="log_connection_details_info">Connection type</string>
+    <string name="log_connection_details_start">From</string>
+    <string name="log_connection_details_stop">To</string>
 </resources>

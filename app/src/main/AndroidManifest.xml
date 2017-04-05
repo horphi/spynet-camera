@@ -67,11 +67,13 @@
             android:name=".ui.ConnectionsLogActivity"
             android:label="@string/log_connections_title" />
         <activity
+            android:name=".ui.ConnectionDetailsActivity"
+            android:label="@string/log_connections_title" />
+        <activity
             android:name=".ui.ScreenCaptureRequestActivity"
             android:theme="@style/TransparentTheme" />
 
         <service android:name=".services.StreamService" />
-
     </application>
 
 </manifest>

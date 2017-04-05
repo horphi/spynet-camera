@@ -22,12 +22,12 @@
 package com.spynet.camera.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,8 +65,6 @@ public class ConnectionsLogActivity extends AppCompatActivity {
         String[] projection = {
                 ConnectionsContract.ConnectionsTable._ID,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_NAME,
-                ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP,
-                ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_INFO,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_START,
                 ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP
@@ -86,11 +84,14 @@ public class ConnectionsLogActivity extends AppCompatActivity {
         // Set the Cursor as the ListView adapter
         ListView listview = (ListView) findViewById(R.id.list);
         listview.setAdapter(new LogCursorAdapter(this, mCursor));
+
+        // On click, show connection details
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // TODO: open details Activity
-                Log.d(TAG, "onItemClick: " + id);
+                Intent intent = new Intent(ConnectionsLogActivity.this, ConnectionDetailsActivity.class);
+                intent.putExtra("ID", id);
+                startActivity(intent);
             }
         });
     }
@@ -118,32 +119,29 @@ public class ConnectionsLogActivity extends AppCompatActivity {
 
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
+
             // Find fields to populate in inflated template
             TextView host = (TextView) view.findViewById(R.id.host);
-            TextView userAgent = (TextView) view.findViewById(R.id.user_agent);
             TextView info = (TextView) view.findViewById(R.id.info);
-            TextView start = (TextView) view.findViewById(R.id.start);
-            TextView stop = (TextView) view.findViewById(R.id.stop);
+            TextView timestamp = (TextView) view.findViewById(R.id.timestamp);
+
             // Extract properties from cursor
             String hostValue = cursor.getString(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_NAME));
-            String ipValue = cursor.getString(cursor.getColumnIndexOrThrow(
-                    ConnectionsContract.ConnectionsTable.COLUMN_NAME_HOST_IP));
-            String userAgentValue = cursor.getString(cursor.getColumnIndexOrThrow(
-                    ConnectionsContract.ConnectionsTable.COLUMN_NAME_USERAGENT));
             String infoValue = cursor.getString(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_INFO));
             long startValue = cursor.getLong(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_START));
             long stopValue = cursor.getLong(cursor.getColumnIndexOrThrow(
                     ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP));
+
             // Populate fields with extracted properties
-            host.setText(hostValue.equals(ipValue) ? hostValue : hostValue + " (" + ipValue + ")");
-            userAgent.setText(userAgentValue);
+            host.setText(hostValue);
             info.setText(infoValue);
-            start.setText(SimpleDateFormat.getDateTimeInstance().format(new Date(startValue)));
-            stop.setText(stopValue == 0 ? "-" :
-                    SimpleDateFormat.getDateTimeInstance().format(new Date(stopValue)));
+            String startDate = SimpleDateFormat.getDateTimeInstance().format(new Date(startValue));
+            String stopDate = stopValue == 0 ? "" :
+                    SimpleDateFormat.getDateTimeInstance().format(new Date(stopValue));
+            timestamp.setText(startDate + " - " + stopDate);
         }
     }
 }
