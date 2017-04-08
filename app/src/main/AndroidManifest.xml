@@ -68,7 +68,7 @@
             android:label="@string/log_connections_title" />
         <activity
             android:name=".ui.ConnectionDetailsActivity"
-            android:label="@string/log_connections_title" />
+            android:label="@string/log_connection_details_title" />
         <activity
             android:name=".ui.ScreenCaptureRequestActivity"
             android:theme="@style/TransparentTheme" />
