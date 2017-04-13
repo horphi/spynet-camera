@@ -36,6 +36,7 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -44,6 +45,8 @@ import android.view.Surface;
 
 import com.spynet.camera.R;
 import com.spynet.camera.common.Image;
+import com.spynet.camera.gl.EGLRecordableContext;
+import com.spynet.camera.gl.NV21TextureRender;
 import com.spynet.camera.ui.ScreenCaptureRequestActivity;
 import com.spynet.camera.ui.SettingsActivity;
 
@@ -102,6 +105,10 @@ public class Recorder
     private volatile boolean mVideoCfgSent;             // Whether the video configuration has been sent (SPS and PPS)
     private volatile boolean mAudioCfgSent;             // Whether the audio configuration has been sent
     private volatile boolean mMJPEGEnabled;             // Whether the MJPEG compression is required
+
+    // FIXME
+    private EGLRecordableContext ctx;
+    private NV21TextureRender render;
 
     /**
      * A client may implement this interface to receive audio and video data buffers
@@ -260,6 +267,7 @@ public class Recorder
 
             // Open the video encoder
             int format;
+            /* FIXME
             if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
             } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)) {
@@ -268,6 +276,16 @@ public class Recorder
                 mVideoEncoder = null;
                 break;
             }
+            */
+            // FIXME
+            if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
+                format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+            } else {
+                mVideoEncoder = null;
+                break;
+            }
+
+
             try {
                 mVideoEncoder.open(
                         mFrameSize.x, mFrameSize.y, format,
@@ -294,6 +312,14 @@ public class Recorder
 
             // No more attempts
             break;
+        }
+
+
+        //FIXME
+        if (mVideoEncoder != null && mVideoEncoder.getSurface() != null) {
+            ctx = new EGLRecordableContext(mVideoEncoder.getSurface());
+            ctx.makeCurrent();
+            render = new NV21TextureRender();
         }
 
         // Ask the user to authorize the screen capture
@@ -748,21 +774,29 @@ public class Recorder
         // Convert the frame format and send it to the video encoder
         if (mVideoEncoder != null) {
             if (timestamp - mLastTimestamp >= mFrameInterval) {
-                mLastTimestamp = timestamp;
-                switch (mVideoEncoder.getColorFormat()) {
-                    case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                        Image.convertNV12ToYUV420SemiPlanar(data, mFrameSize.x, mFrameSize.y);
-                        break;
-                    case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                        Image.convertNV12ToYUV420Planar(data, mFrameSize.x, mFrameSize.y);
-                        break;
-                }
-                try {
-                    mVideoEncoder.push(new VideoFrame(
-                            data, mFrameSize.x, mFrameSize.y, mFrameFormat, timestamp));
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "cannot send the frame to the encoder, operation interrupted");
-                    Thread.currentThread().interrupt();
+                if (mVideoEncoder.getSurface() == null) {
+                    mLastTimestamp = timestamp;
+                    switch (mVideoEncoder.getColorFormat()) {
+                        case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
+                            Image.convertNV12ToYUV420SemiPlanar(data, mFrameSize.x, mFrameSize.y);
+                            break;
+                        case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
+                            Image.convertNV12ToYUV420Planar(data, mFrameSize.x, mFrameSize.y);
+                            break;
+                    }
+                    try {
+                        mVideoEncoder.push(new VideoFrame(
+                                data, mFrameSize.x, mFrameSize.y, mFrameFormat, timestamp));
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "cannot send the frame to the encoder, operation interrupted");
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    // FIXME
+                    ctx.makeCurrent();
+                    render.draw(data, mFrameSize.x, mFrameSize.y);
+                    ctx.setPresentationTime(timestamp * 1000);
+                    ctx.swapBuffers();
                 }
             }
         }
