@@ -36,7 +36,6 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
-import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -46,7 +45,7 @@ import android.view.Surface;
 import com.spynet.camera.R;
 import com.spynet.camera.common.Image;
 import com.spynet.camera.gl.EGLRecordableContext;
-import com.spynet.camera.gl.NV21TextureRender;
+import com.spynet.camera.gl.NV21Renderer;
 import com.spynet.camera.ui.ScreenCaptureRequestActivity;
 import com.spynet.camera.ui.SettingsActivity;
 
@@ -91,10 +90,12 @@ public class Recorder
     private RecorderCallback mCallback;                 // The RecorderCallback implemented by mContext
     private BroadcastReceiver mScreenCaptureReceiver;   // The BroadcastReceiver to receive screen capture authorization
     private Camera mCamera;                             // LiveCamera that will generate the video stream
-    private MJPEGEncoder mMJPEGEncoder;                 // Encoder to encode the video in MJPEG
     private AudioRecorder mAudioRecorder;               // AudioRecorder that will generate the audio stream
+    private MJPEGEncoder mMJPEGEncoder;                 // Encoder to encode the video in MJPEG
     private VideoEncoder mVideoEncoder;                 // Encoder to encode the video
     private AudioEncoder mAudioEncoder;                 // Encoder to encode the audio
+    private EGLRecordableContext mEGLContext;           // The recordable EGL context used by OpenGL
+    private NV21Renderer mGLRenderer;                   // The NV21Renderer that will render the frames
     private MediaProjection mMediaProjection;           // MediaProjection to capture the screen
     private VirtualDisplay mVirtualDisplay;             // VirtualDisplay to capture the screen
     private Point mFrameSize;                           // Video frame size
@@ -105,10 +106,6 @@ public class Recorder
     private volatile boolean mVideoCfgSent;             // Whether the video configuration has been sent (SPS and PPS)
     private volatile boolean mAudioCfgSent;             // Whether the audio configuration has been sent
     private volatile boolean mMJPEGEnabled;             // Whether the MJPEG compression is required
-
-    // FIXME
-    private EGLRecordableContext ctx;
-    private NV21TextureRender render;
 
     /**
      * A client may implement this interface to receive audio and video data buffers
@@ -267,8 +264,10 @@ public class Recorder
 
             // Open the video encoder
             int format;
-            /* FIXME
-            if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 &&
+                    mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
+                format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+            } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
             } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
@@ -276,16 +275,6 @@ public class Recorder
                 mVideoEncoder = null;
                 break;
             }
-            */
-            // FIXME
-            if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
-                format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
-            } else {
-                mVideoEncoder = null;
-                break;
-            }
-
-
             try {
                 mVideoEncoder.open(
                         mFrameSize.x, mFrameSize.y, format,
@@ -314,12 +303,11 @@ public class Recorder
             break;
         }
 
-
-        //FIXME
+        // Initialize OpenGL
         if (mVideoEncoder != null && mVideoEncoder.getSurface() != null) {
-            ctx = new EGLRecordableContext(mVideoEncoder.getSurface());
-            ctx.makeCurrent();
-            render = new NV21TextureRender();
+            mEGLContext = new EGLRecordableContext(mVideoEncoder.getSurface());
+            mEGLContext.makeCurrent();
+            mGLRenderer = new NV21Renderer(mFrameSize.x, mFrameSize.y);
         }
 
         // Ask the user to authorize the screen capture
@@ -338,7 +326,7 @@ public class Recorder
                             Intent mpIntent = intent.getParcelableExtra(EXTRA_MEDIA_PROJECTION_INTENT);
                             int resultCode = intent.getIntExtra(EXTRA_MEDIA_PROJECTION_RESULT, Activity.RESULT_CANCELED);
                             MediaProjectionManager mpManager =
-                                    (MediaProjectionManager) context.getSystemService(android.content.Context.MEDIA_PROJECTION_SERVICE);
+                                    (MediaProjectionManager) context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
                             if (mpManager != null) {
                                 mMediaProjection = mpManager.getMediaProjection(resultCode, mpIntent);
                                 if (mMediaProjection != null) {
@@ -469,6 +457,12 @@ public class Recorder
                 mMediaProjection.stop();
                 mMediaProjection = null;
             }
+        }
+
+        // Release the EGL context
+        if (mEGLContext != null) {
+            mEGLContext.release();
+            mEGLContext = null;
         }
 
         // Shutdown the camera
@@ -792,11 +786,10 @@ public class Recorder
                         Thread.currentThread().interrupt();
                     }
                 } else {
-                    // FIXME
-                    ctx.makeCurrent();
-                    render.draw(data, mFrameSize.x, mFrameSize.y);
-                    ctx.setPresentationTime(timestamp * 1000);
-                    ctx.swapBuffers();
+                    mEGLContext.makeCurrent();
+                    mGLRenderer.draw(data);
+                    mEGLContext.setPresentationTime(timestamp * 1000);
+                    mEGLContext.swapBuffers();
                 }
             }
         }
