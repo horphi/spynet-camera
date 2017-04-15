@@ -26,12 +26,13 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.opengl.GLES20;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.spynet.camera.common.TimeStamp;
+import com.spynet.camera.gl.EGLOffscreenContext;
+import com.spynet.camera.gl.TextureRenderer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +52,9 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
 
     private final Camera mCamera;                   // The underlying Camera device
     private final int mFacing;                      // The camera facing
-    private final SurfaceTexture mSurfaceTexture;   // The SurfaceTexture used to render the preview offscreen
+    private TextureRenderer mTextureRenderer;       // The TextureRenderer that will render the frames
+    private EGLOffscreenContext mEglContext;        // The offscreen EGL context used by OpenGL
+    private SurfaceTexture mSurfaceTexture;         // The SurfaceTexture used to render the preview offscreen
     private FrameCallback mFrameCallback;           // The FrameCallback implemented by mContext
     private DummySurfaceHolder mSurfaceHolder;      // The SurfaceHolder that embeds the preview Surface
     private long mStartTime;                        // Time when start counting frames
@@ -74,10 +77,6 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
         Camera.CameraInfo ci = new Camera.CameraInfo();
         Camera.getCameraInfo(cameraId, ci);
         mFacing = ci.facing;
-        // Create the SurfaceTexture to render the preview offscreen
-        int[] mTextureHandles = new int[1];
-        GLES20.glGenTextures(1, mTextureHandles, 0);
-        mSurfaceTexture = new SurfaceTexture(mTextureHandles[0]);
     }
 
     /**
@@ -142,6 +141,12 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
         // Set new camera parameters
         mCamera.setParameters(params);
 
+        // Create the SurfaceTexture to render the preview offscreen
+        mEglContext = new EGLOffscreenContext(bestSize.width, bestSize.height);
+        mEglContext.makeCurrent();
+        mTextureRenderer = new TextureRenderer();
+        mSurfaceTexture = new SurfaceTexture(mTextureRenderer.getTextureId());
+
         // Start the preview
         mStartTime = 0;
         mFrameCount = 0;
@@ -188,6 +193,10 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
     @Override
     public void release() {
         mCamera.release();
+        if (mEglContext != null)
+            mEglContext.release();
+        if (mSurfaceTexture != null)
+            mSurfaceTexture.release();
     }
 
     @Override

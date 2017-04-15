@@ -81,7 +81,7 @@ public class EGLRecordableContext {
         // Choose the configuration that better matches the specified attributes
         int[] numConfigs = new int[1];
         EGLConfig[] eglConfig = new EGLConfig[1];
-        if (!EGL14.eglChooseConfig(mDisplay, CONFIG_RECORDABLE, 0, eglConfig, 0, eglConfig.length, numConfigs, 0))
+        if (!EGL14.eglChooseConfig(mDisplay, CONFIG_RECORDABLE, 0, eglConfig, 0, 1, numConfigs, 0))
             throw new RuntimeException("can't get a valid configuration");
         mConfig = eglConfig[0];
 

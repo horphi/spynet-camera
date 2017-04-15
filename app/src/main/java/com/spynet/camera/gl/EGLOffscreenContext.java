@@ -21,13 +21,12 @@
 
 package com.spynet.camera.gl;
 
+import android.opengl.EGL14;
+import android.opengl.EGLConfig;
+import android.opengl.EGLContext;
+import android.opengl.EGLDisplay;
+import android.opengl.EGLSurface;
 import android.util.Log;
-
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-import javax.microedition.khronos.egl.EGLSurface;
 
 /**
  * Represents an EGL context associated with a pbuffer surface, used for offscreen rendering.<br>
@@ -37,89 +36,70 @@ import javax.microedition.khronos.egl.EGLSurface;
  */
 public class EGLOffscreenContext {
 
-    private static final int EGL_OPENGL_ES2_BIT = 4;
     private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
     private final String TAG = getClass().getSimpleName();
 
-    private final EGL10 mEgl;                   // The EGL implementation
     private final EGLDisplay mDisplay;          // The EGL display
     private final EGLConfig mConfig;            // The EGL configuration
     private final EGLSurface mSurface;          // The EGL surface
     private final EGLContext mContext;          // The EGL context
 
     /**
-     * Attribute list to create a context that supports RGB pbuffers
-     * that can be rendered using OpenGL ES 2.0.
-     */
-    public static final int[] CONFIG_PIXEL_BUFFER = {
-            EGL10.EGL_RED_SIZE, 8,
-            EGL10.EGL_GREEN_SIZE, 8,
-            EGL10.EGL_BLUE_SIZE, 8,
-            EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-            EGL10.EGL_NONE
-    };
-
-    /**
      * Attribute list to create a context that supports RGBA pbuffers
      * that can be rendered using OpenGL ES 2.0.
      */
-    public static final int[] CONFIG_PIXEL_RGBA_BUFFER = {
-            EGL10.EGL_RED_SIZE, 8,
-            EGL10.EGL_GREEN_SIZE, 8,
-            EGL10.EGL_BLUE_SIZE, 8,
-            EGL10.EGL_ALPHA_SIZE, 8,
-            EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-            EGL10.EGL_NONE
+    private static final int[] CONFIG_PIXEL_RGBA_BUFFER = {
+            EGL14.EGL_RED_SIZE, 8,
+            EGL14.EGL_GREEN_SIZE, 8,
+            EGL14.EGL_BLUE_SIZE, 8,
+            EGL14.EGL_ALPHA_SIZE, 8,
+            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+            EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+            EGL14.EGL_NONE
     };
 
     /**
      * Creates a new EGLOffscreenContext object.
      *
-     * @param attribList the list of attributes that determines the EGL configuration to choose
-     *                   (one of {@code CONFIG_PIXEL_BUFFER} or {@code CONFIG_PIXEL_RGBA_BUFFER})
-     * @param width      the width in pixel of the offscreen surface
-     * @param height     the height in pixel of the offscreen surface
+     * @param width  the width in pixel of the offscreen surface
+     * @param height the height in pixel of the offscreen surface
      */
-    public EGLOffscreenContext(int[] attribList, int width, int height) {
-
-        mEgl = (EGL10) javax.microedition.khronos.egl.EGLContext.getEGL();
+    public EGLOffscreenContext(int width, int height) {
 
         // Initialization (must be performed once for each display)
-        mDisplay = mEgl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-        if (mDisplay == EGL10.EGL_NO_DISPLAY)
+        mDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        if (mDisplay == EGL14.EGL_NO_DISPLAY)
             throw new RuntimeException("can't get the default display");
         int[] version = new int[2];
-        if (!mEgl.eglInitialize(mDisplay, version))
+        if (!EGL14.eglInitialize(mDisplay, version, 0, version, 1))
             throw new RuntimeException("can't initialize EGL");
         Log.d(TAG, "EGL version " + version[0] + "." + version[1]);
 
         // Choose the configuration that better matches the specified attributes
         int[] numConfigs = new int[1];
         EGLConfig[] eglConfig = new EGLConfig[1];
-        if (!mEgl.eglChooseConfig(mDisplay, attribList, eglConfig, 1, numConfigs))
+        if (!EGL14.eglChooseConfig(mDisplay, CONFIG_PIXEL_RGBA_BUFFER, 0, eglConfig, 0, 1, numConfigs, 0))
             throw new RuntimeException("can't get a valid configuration");
         mConfig = eglConfig[0];
 
         // Create the off-screen rendering surface
         int[] surfaceAttribList = new int[]{
-                EGL10.EGL_WIDTH, width,
-                EGL10.EGL_HEIGHT, height,
-                EGL10.EGL_NONE
+                EGL14.EGL_WIDTH, width,
+                EGL14.EGL_HEIGHT, height,
+                EGL14.EGL_NONE
         };
-        mSurface = mEgl.eglCreatePbufferSurface(mDisplay, mConfig, surfaceAttribList);
-        if (mSurface == EGL10.EGL_NO_SURFACE)
+        mSurface = EGL14.eglCreatePbufferSurface(mDisplay, mConfig, surfaceAttribList, 0);
+        if (mSurface == EGL14.EGL_NO_SURFACE)
             throw new RuntimeException("can't create the surface");
 
         // Create the context
         int[] contextAttribList = new int[]{
                 EGL_CONTEXT_CLIENT_VERSION, 2,  // OpenGL ES 2.x context
-                EGL10.EGL_NONE
+                EGL14.EGL_NONE
         };
-        mContext = mEgl.eglCreateContext(mDisplay, mConfig, EGL10.EGL_NO_CONTEXT, contextAttribList);
-        if (mContext == EGL10.EGL_NO_CONTEXT)
+        mContext = EGL14.eglCreateContext(mDisplay, mConfig, EGL14.EGL_NO_CONTEXT, contextAttribList, 0);
+        if (mContext == EGL14.EGL_NO_CONTEXT)
             throw new RuntimeException("can't create the context");
     }
 
@@ -128,16 +108,16 @@ public class EGLOffscreenContext {
      */
     public void release() {
         releaseCurrent();
-        mEgl.eglDestroyContext(mDisplay, mContext);
-        mEgl.eglDestroySurface(mDisplay, mSurface);
-        mEgl.eglTerminate(mDisplay);
+        EGL14.eglDestroyContext(mDisplay, mContext);
+        EGL14.eglDestroySurface(mDisplay, mSurface);
+        EGL14.eglTerminate(mDisplay);
     }
 
     /**
      * Binds the context to the current rendering thread and to the surface.
      */
     public void makeCurrent() {
-        if (!mEgl.eglMakeCurrent(mDisplay, mSurface, mSurface, mContext))
+        if (!EGL14.eglMakeCurrent(mDisplay, mSurface, mSurface, mContext))
             throw new RuntimeException("can't bind the context");
     }
 
@@ -145,7 +125,7 @@ public class EGLOffscreenContext {
      * Releases the current context.
      */
     public void releaseCurrent() {
-        if (!mEgl.eglMakeCurrent(mDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT))
+        if (!EGL14.eglMakeCurrent(mDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT))
             throw new RuntimeException("can't release the context");
     }
 }

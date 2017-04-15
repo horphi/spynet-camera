@@ -30,7 +30,7 @@ import android.view.Surface;
 
 import com.spynet.camera.common.TimeStamp;
 import com.spynet.camera.gl.EGLOffscreenContext;
-import com.spynet.camera.gl.TextureRender;
+import com.spynet.camera.gl.TextureRenderer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,10 +51,10 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
     private FrameCallback mFrameCallback;           // The FrameCallback implemented by mContext
     private Point mFrameSize;                       // The frame size in pixel
     private int mFrameFormat;                       // The frame format
+    private TextureRenderer mTextureRenderer;       // The TextureRenderer that will render the frames
+    private EGLOffscreenContext mEglContext;        // The offscreen EGL context used by OpenGL
     private SurfaceTexture mSurfaceTexture;         // The SurfaceTexture where the frames will be rendered
     private Surface mSurface;                       // The Surface attached to the SurfaceTexture
-    private TextureRender mTextureRender;           // The TextureRender that will render the frames
-    private EGLOffscreenContext mEglContext;        // The offscreen EGL context used by OpenGL
     private ByteBuffer mFrameBuffer;                // The input frame buffer (from OpenGL)
     private Thread mDeliverThread;                  // The thread that deliver the frames to the client
     private long mStartTime;                        // Time when start counting frames
@@ -115,12 +115,10 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
         mFrameBuffer = ByteBuffer.allocateDirect(mFrameSize.x * mFrameSize.y * 4);
 
         // Initialize OpenGL stuff
-        mEglContext = new EGLOffscreenContext(
-                EGLOffscreenContext.CONFIG_PIXEL_RGBA_BUFFER,
-                mFrameSize.x, mFrameSize.y);
+        mEglContext = new EGLOffscreenContext(mFrameSize.x, mFrameSize.y);
         mEglContext.makeCurrent();
-        mTextureRender = new TextureRender();
-        mSurfaceTexture = new SurfaceTexture(mTextureRender.getTextureId());
+        mTextureRenderer = new TextureRenderer();
+        mSurfaceTexture = new SurfaceTexture(mTextureRenderer.getTextureId());
         mSurfaceTexture.setDefaultBufferSize(mFrameSize.x, mFrameSize.y);
         mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
@@ -246,8 +244,8 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
         // Draw the frame and copy its pixels in the frame buffer
         mEglContext.makeCurrent();
         mSurfaceTexture.updateTexImage();
-        mTextureRender.draw();
-        mTextureRender.getPixels(mFrameSize.x, mFrameSize.y, mFrameBuffer);
+        mTextureRenderer.draw();
+        mTextureRenderer.getPixels(mFrameSize.x, mFrameSize.y, mFrameBuffer);
     }
 
     /**

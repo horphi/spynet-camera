@@ -95,7 +95,7 @@ public class Recorder
     private VideoEncoder mVideoEncoder;                 // Encoder to encode the video
     private AudioEncoder mAudioEncoder;                 // Encoder to encode the audio
     private EGLRecordableContext mEGLContext;           // The recordable EGL context used by OpenGL
-    private NV21Renderer mGLRenderer;                   // The NV21Renderer that will render the frames
+    private NV21Renderer mNV21Renderer;                 // The NV21Renderer that will render the frames
     private MediaProjection mMediaProjection;           // MediaProjection to capture the screen
     private VirtualDisplay mVirtualDisplay;             // VirtualDisplay to capture the screen
     private Point mFrameSize;                           // Video frame size
@@ -307,7 +307,7 @@ public class Recorder
         if (mVideoEncoder != null && mVideoEncoder.getSurface() != null) {
             mEGLContext = new EGLRecordableContext(mVideoEncoder.getSurface());
             mEGLContext.makeCurrent();
-            mGLRenderer = new NV21Renderer(mFrameSize.x, mFrameSize.y);
+            mNV21Renderer = new NV21Renderer(mFrameSize.x, mFrameSize.y);
         }
 
         // Ask the user to authorize the screen capture
@@ -787,7 +787,7 @@ public class Recorder
                     }
                 } else {
                     mEGLContext.makeCurrent();
-                    mGLRenderer.draw(data);
+                    mNV21Renderer.draw(data);
                     mEGLContext.setPresentationTime(timestamp * 1000);
                     mEGLContext.swapBuffers();
                 }
