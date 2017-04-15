@@ -32,7 +32,7 @@ import android.util.Log;
 import android.view.Surface;
 
 /**
- * Represents an EGL context wrapped around a codec input {@link android.view.Surface}.<br>
+ * Represents an EGL context wrapped around a {@link android.view.Surface}.<br>
  * Android supports a number of different ANativeWindow implementations that can be used
  * to create an EGLSurface, which records the rendered image as a video each time eglSwapBuffers
  * gets called.
@@ -129,14 +129,21 @@ public class EGLRecordableContext {
             throw new RuntimeException("can't release the context");
     }
 
+    /**
+     * Posts the EGL surface color buffer to the underlying native window.
+     */
     public void swapBuffers() {
         if (!EGL14.eglSwapBuffers(mDisplay, mSurface))
             throw new RuntimeException("can't swap buffers");
     }
 
-    public void setPresentationTime(long nsecs) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            EGLExt.eglPresentationTimeANDROID(mDisplay, mSurface, nsecs);
-        }
+    /**
+     * Sets the image presentation time.
+     *
+     * @param timestamp the presentation time in microseconds
+     */
+    public void setPresentationTime(long timestamp) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+            EGLExt.eglPresentationTimeANDROID(mDisplay, mSurface, timestamp * 1000);
     }
 }

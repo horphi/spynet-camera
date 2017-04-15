@@ -308,6 +308,7 @@ public class Recorder
             mEGLContext = new EGLRecordableContext(mVideoEncoder.getSurface());
             mEGLContext.makeCurrent();
             mNV21Renderer = new NV21Renderer(mFrameSize.x, mFrameSize.y);
+            mEGLContext.releaseCurrent();
         }
 
         // Ask the user to authorize the screen capture
@@ -459,17 +460,17 @@ public class Recorder
             }
         }
 
-        // Release the EGL context
-        if (mEGLContext != null) {
-            mEGLContext.release();
-            mEGLContext = null;
-        }
-
         // Shutdown the camera
         if (mCamera != null) {
             mCamera.close();
             mCamera.release();
             mCamera = null;
+        }
+
+        // Release the EGL context
+        if (mEGLContext != null) {
+            mEGLContext.release();
+            mEGLContext = null;
         }
 
         // Shutdown the video encoder
@@ -788,7 +789,7 @@ public class Recorder
                 } else {
                     mEGLContext.makeCurrent();
                     mNV21Renderer.draw(data);
-                    mEGLContext.setPresentationTime(timestamp * 1000);
+                    mEGLContext.setPresentationTime(timestamp);
                     mEGLContext.swapBuffers();
                 }
             }

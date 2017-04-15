@@ -119,6 +119,7 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
         mEglContext.makeCurrent();
         mTextureRenderer = new TextureRenderer();
         mSurfaceTexture = new SurfaceTexture(mTextureRenderer.getTextureId());
+        mEglContext.releaseCurrent();
         mSurfaceTexture.setDefaultBufferSize(mFrameSize.x, mFrameSize.y);
         mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
