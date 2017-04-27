@@ -38,7 +38,7 @@ public final class Image {
     }
 
     /**
-     * Converts a NV12 image to a YUV420SemiPlanar image.<br>
+     * Converts a NV21 image to a YUV420SemiPlanar image.<br>
      * We assume that there's no padding (stride = {@code width}) and that the {@code data}
      * buffer contains exactly one image, i.e. its size equals {@code width * height * 3 / 2}.
      *
@@ -46,7 +46,7 @@ public final class Image {
      * @param width  the image width
      * @param height the image height
      */
-    public static void convertNV12ToYUV420SemiPlanar(byte[] data, int width, int height) {
+    public static void convertNV21ToYUV420SemiPlanar(byte[] data, int width, int height) {
         for (int i = width * height; i < data.length; ) {
             byte tmp = data[i];
             data[i] = data[++i];
@@ -55,7 +55,7 @@ public final class Image {
     }
 
     /**
-     * Converts a NV12 image to a YUV420Planar image.<br>
+     * Converts a NV21 image to a YUV420Planar image.<br>
      * We assume that there's no padding (stride = {@code width}) and that the {@code data}
      * buffer contains exactly one image, i.e. its size equals {@code width * height * 3 / 2}.
      *
@@ -63,7 +63,7 @@ public final class Image {
      * @param width  the image width
      * @param height the image height
      */
-    public static void convertNV12ToYUV420Planar(byte[] data, int width, int height) {
+    public static void convertNV21ToYUV420Planar(byte[] data, int width, int height) {
 
         final int c_stride = width / 2;
         final int c_size = c_stride * height / 2;

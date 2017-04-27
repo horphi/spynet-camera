@@ -91,8 +91,9 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
     @Override
     public void open(int width, int height, int format) throws IOException {
 
+        final Camera.Parameters params;
+
         // Read current camera parameters
-        Camera.Parameters params;
         params = mCamera.getParameters();
 
         // Find the best picture size
@@ -142,10 +143,12 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
         mCamera.setParameters(params);
 
         // Create the SurfaceTexture to render the preview offscreen
-        mEglContext = new EGLOffscreenContext(bestSize.width, bestSize.height);
+        mEglContext = new EGLOffscreenContext(
+                params.getPreviewSize().width, params.getPreviewSize().height);
         mEglContext.makeCurrent();
         mTextureRenderer = new TextureRenderer();
         mSurfaceTexture = new SurfaceTexture(mTextureRenderer.getTextureId());
+        mEglContext.releaseCurrent();
 
         // Start the preview
         mStartTime = 0;
@@ -193,10 +196,10 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
     @Override
     public void release() {
         mCamera.release();
-        if (mEglContext != null)
-            mEglContext.release();
         if (mSurfaceTexture != null)
             mSurfaceTexture.release();
+        if (mEglContext != null)
+            mEglContext.release();
     }
 
     @Override

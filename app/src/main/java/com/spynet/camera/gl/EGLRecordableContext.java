@@ -110,6 +110,7 @@ public class EGLRecordableContext {
         releaseCurrent();
         EGL14.eglDestroyContext(mDisplay, mContext);
         EGL14.eglDestroySurface(mDisplay, mSurface);
+        EGL14.eglReleaseThread();
         EGL14.eglTerminate(mDisplay);
     }
 

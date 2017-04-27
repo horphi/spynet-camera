@@ -32,6 +32,8 @@ import com.github.stkent.amplify.tracking.Amplify;
  */
 public class SpyNetApplication extends Application {
 
+    private final String TAG = getClass().getSimpleName();
+
     @Override
     public void onCreate() {
         super.onCreate();

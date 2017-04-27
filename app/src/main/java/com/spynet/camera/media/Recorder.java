@@ -264,13 +264,13 @@ public class Recorder
 
             // Open the video encoder
             int format;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 &&
-                    mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
-                format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
-            } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
+            if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
             } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 &&
+                    mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
+                format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
             } else {
                 mVideoEncoder = null;
                 break;
@@ -773,10 +773,10 @@ public class Recorder
                     mLastTimestamp = timestamp;
                     switch (mVideoEncoder.getColorFormat()) {
                         case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                            Image.convertNV12ToYUV420SemiPlanar(data, mFrameSize.x, mFrameSize.y);
+                            Image.convertNV21ToYUV420SemiPlanar(data, mFrameSize.x, mFrameSize.y);
                             break;
                         case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                            Image.convertNV12ToYUV420Planar(data, mFrameSize.x, mFrameSize.y);
+                            Image.convertNV21ToYUV420Planar(data, mFrameSize.x, mFrameSize.y);
                             break;
                     }
                     try {

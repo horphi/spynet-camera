@@ -29,7 +29,11 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 /**
- * Implements a renderer for rendering a texture onto a surface using OpenGL ES 2.0.
+ * Implements a renderer for rendering a texture onto a surface using OpenGL ES 2.0.<br>
+ * The texture format is RGBA; the fragment shader will perform an RGB to YUV conversion.
+ * All the resulting pixels will contain YUVA values. This is not an usable format but,
+ * using this trick, it is possible to construct an NV21 image easily. Use {@code getPixels()}
+ * to retrieve the pixels.
  */
 public class TextureRenderer {
 
@@ -194,7 +198,7 @@ public class TextureRenderer {
      * If a call to glGetError returns GL_NO_ERROR, there has been no detectable error
      * since the last call to glGetError, or since the GL was initialized.
      *
-     * @param op the name of the operation, use to create the Exception message
+     * @param op the name of the operation, used to create the Exception message
      */
     private static void checkGLError(String op) {
         int error = GLES20.glGetError();

@@ -143,7 +143,7 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
                     while (!Thread.currentThread().isInterrupted()) {
                         try {
                             mFrameSyncObject.wait(FRAME_TIMEOUT);
-                            convertToNV12(mFrameBuffer.array(), data, mFrameSize.x, mFrameSize.y);
+                            convertToNV21(mFrameBuffer.array(), data, mFrameSize.x, mFrameSize.y);
                             processPreviewFrame(data);
                         } catch (InterruptedException e) {
                             break;
@@ -253,10 +253,10 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
      * Adjust the frame format.
      * The frame buffer acquired from the OpenGL surface contains pixels whose size is 4 bytes.
      * Bytes represent Y, U, V, A (alpha color not used here).
-     * We have to rearrange bytes in the NV12 format, that is 4:2:0 YCrCb with planar Y,
+     * We have to rearrange bytes in the NV21 format, that is 4:2:0 YCrCb with planar Y,
      * followed by interleaved Cr/Cb plane.
      */
-    public void convertToNV12(byte[] argb, byte[] nv12, int width, int height) {
+    public void convertToNV21(byte[] argb, byte[] nv21, int width, int height) {
 
         int index = 0;
         int yIndex = 0;
@@ -269,10 +269,10 @@ public class ScreenCaptureCamera implements com.spynet.camera.media.Camera {
                 U = argb[index++];
                 V = argb[index++];
                 index++;
-                nv12[yIndex++] = Y;
+                nv21[yIndex++] = Y;
                 if (j % 2 == 1 && i % 2 == 1) {
-                    nv12[uvIndex++] = V;
-                    nv12[uvIndex++] = U;
+                    nv21[uvIndex++] = V;
+                    nv21[uvIndex++] = U;
                 }
             }
         }
