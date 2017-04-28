@@ -132,10 +132,11 @@ public class EGLRecordableContext {
 
     /**
      * Posts the EGL surface color buffer to the underlying native window.
+     *
+     * @return {@code true} if succeeded, {@code false} otherwise
      */
-    public void swapBuffers() {
-        if (!EGL14.eglSwapBuffers(mDisplay, mSurface))
-            throw new RuntimeException("can't swap buffers");
+    public boolean swapBuffers() {
+        return EGL14.eglSwapBuffers(mDisplay, mSurface);
     }
 
     /**
