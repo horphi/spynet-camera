@@ -55,10 +55,12 @@ public final class Utils {
     }
 
     /**
-     * @return a unique ID
+     * @return a unique ID (may not be 0)
      */
     public static long getUniqueID() {
-        return mUniqueID++;
+        long id = mUniqueID++;
+        if (id == 0) id = mUniqueID++;
+        return id;
     }
 
     /**

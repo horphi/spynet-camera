@@ -92,8 +92,12 @@ public class ConnectionsDbHelper extends SQLiteOpenHelper {
      * @param stopTimestamp the stop timestamp
      */
     public void log(InetAddress host, long streamID, long stopTimestamp) {
-        if (host == null || streamID == 0 || stopTimestamp == 0)
-            throw new IllegalArgumentException();
+        if (host == null)
+            throw new IllegalArgumentException("host == null");
+        if (streamID == 0)
+            throw new IllegalArgumentException("streamID == 0");
+        if (stopTimestamp == 0)
+            throw new IllegalArgumentException("stopTimestamp == 0");
         SQLiteDatabase db = getWritableDatabase();
         ContentValues entry = new ContentValues();
         entry.put(ConnectionsContract.ConnectionsTable.COLUMN_NAME_STOP, stopTimestamp);

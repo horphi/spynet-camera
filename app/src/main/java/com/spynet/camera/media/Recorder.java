@@ -268,10 +268,14 @@ public class Recorder
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
             } else if (mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 &&
+            }
+            /* TODO: how to add OpenGL safelly?
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 &&
                     mVideoEncoder.supportsColorFormat(MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)) {
                 format = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
-            } else {
+            }
+            */
+            else {
                 mVideoEncoder = null;
                 break;
             }
