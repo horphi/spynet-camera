@@ -88,7 +88,12 @@ public class AudioEncoder extends AudioCodec implements Closeable {
     @Override
     public void close() {
         stopEncoding();
-        mEncoder.stop();
+        try {
+            mEncoder.stop();
+        } catch (IllegalStateException e) {
+            // This could happen if the encoder died
+            Log.e(TAG, "failed to close", e);
+        }
         mInputBuffers = null;
         mOutputBuffers = null;
         mBitrate = 0;
@@ -199,9 +204,8 @@ public class AudioEncoder extends AudioCodec implements Closeable {
                     outBuffer.limit(info.offset + info.size);
                     outBuffer.get(data, info.offset, info.size);
                     mEncoder.releaseOutputBuffer(outputBufferId, false);
-                    if (mCodecCallback != null) {
+                    if (mCodecCallback != null)
                         mCodecCallback.onDataAvailable(this, data, info);
-                    }
                 } else if (outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     mOutputBuffers = mEncoder.getOutputBuffers();
                     Log.d(TAG, "output buffers changed");
@@ -210,14 +214,15 @@ public class AudioEncoder extends AudioCodec implements Closeable {
                     MediaFormat newFormat = mEncoder.getOutputFormat();
                     mAudioCfg = newFormat.getByteBuffer("csd-0");
                     Log.i(TAG, "output format changed to " + newFormat.toString());
-                    if (mCodecCallback != null) {
+                    if (mCodecCallback != null)
                         mCodecCallback.onOutputFormatChanged(this, newFormat);
-                    }
                 }
             } catch (InterruptedException e) {
                 Log.v(TAG, "encoder loop interrupted");
                 break;
             } catch (Exception e) {
+                if (mCodecCallback != null)
+                    mCodecCallback.onDied(this);
                 Log.e(TAG, "unexpected exception while encoding", e);
                 break;
             }

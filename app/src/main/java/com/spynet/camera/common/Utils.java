@@ -39,14 +39,13 @@ import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Random;
 
 /**
  * A collection of static utilities.
  */
 public final class Utils {
 
-    private static long mUniqueID = new Random(System.nanoTime()).nextLong();
+    private static long mUniqueID = System.nanoTime();
 
     /**
      * Hidden constructor, the class cannot be instantiated.
@@ -55,12 +54,10 @@ public final class Utils {
     }
 
     /**
-     * @return a unique ID (may not be 0)
+     * @return a unique ID (always greater than 0)
      */
     public static long getUniqueID() {
-        long id = mUniqueID++;
-        if (id == 0) id = mUniqueID++;
-        return id;
+        return mUniqueID++;
     }
 
     /**

@@ -57,6 +57,10 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
     private SurfaceTexture mSurfaceTexture;         // The SurfaceTexture used to render the preview offscreen
     private FrameCallback mFrameCallback;           // The FrameCallback implemented by mContext
     private DummySurfaceHolder mSurfaceHolder;      // The SurfaceHolder that embeds the preview Surface
+    private Point mFrameSize;                       // The current frame size
+    private int mFrameFormat;                       // The current frame format
+    private float mZoom;                            // The current zoom factor
+    private boolean mTorch;                         // The current torch state
     private long mStartTime;                        // Time when start counting frames
     private long mFrameCount;                       // Number of counted frames
     private volatile float mAverageFps;             // Average frames speed
@@ -91,15 +95,15 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
     @Override
     public void open(int width, int height, int format) throws IOException {
 
-        final Camera.Parameters params;
+        final Camera.Parameters parameters;
 
         // Read current camera parameters
-        params = mCamera.getParameters();
+        parameters = mCamera.getParameters();
 
         // Find the best picture size
         Camera.Size bestSize = null;
         float bestScore = 0.0f;
-        for (Camera.Size s : params.getSupportedPreviewSizes()) {
+        for (Camera.Size s : parameters.getSupportedPreviewSizes()) {
             Log.v(TAG, "available resolution " + s.width + "x" + s.height);
             float scoreX = (float) width / (float) s.width;
             if (scoreX > 1.0f) scoreX = 1.0f / scoreX;
@@ -113,11 +117,12 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
         }
         assert bestSize != null; // getSupportedPreviewSizes() always returns a list with at least one element
         Log.i(TAG, "preview size is " + bestSize.width + "x" + bestSize.height);
-        params.setPreviewSize(bestSize.width, bestSize.height);
+        parameters.setPreviewSize(bestSize.width, bestSize.height);
+        mFrameSize = new Point(bestSize.width, bestSize.height);
 
         // Set the desired pixel-format
         int colorFormat = ImageFormat.UNKNOWN;
-        List<Integer> formats = params.getSupportedPreviewFormats();
+        List<Integer> formats = parameters.getSupportedPreviewFormats();
         for (int f : formats) {
             Log.v(TAG, "supported preview format : " + f);
             if (f == format) colorFormat = f;
@@ -125,26 +130,33 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
         if (colorFormat == ImageFormat.UNKNOWN)
             colorFormat = ImageFormat.NV21;
         Log.i(TAG, "preview format is " + colorFormat);
-        params.setPreviewFormat(colorFormat);
+        parameters.setPreviewFormat(colorFormat);
+        mFrameFormat = colorFormat;
+
+        // Store the current zoom factor
+        mZoom = 1.0f;
+        if (parameters.isZoomSupported())
+            mZoom = (float) parameters.getZoomRatios().get(parameters.getZoom()) / 100f;
 
         // Set the focus mode to auto
-        if (params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO))
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+        if (parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO))
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 
         // Set the flash mode to off
-        List<String> flashModes = params.getSupportedFlashModes();
+        List<String> flashModes = parameters.getSupportedFlashModes();
         if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_OFF))
-            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+        mTorch = false;
 
         // Allow full fps preview
-        params.setRecordingHint(true);
+        parameters.setRecordingHint(true);
 
         // Set new camera parameters
-        mCamera.setParameters(params);
+        mCamera.setParameters(parameters);
 
         // Create the SurfaceTexture to render the preview offscreen
         mEglContext = new EGLOffscreenContext(
-                params.getPreviewSize().width, params.getPreviewSize().height);
+                parameters.getPreviewSize().width, parameters.getPreviewSize().height);
         mEglContext.makeCurrent();
         mTextureRenderer = new TextureRenderer();
         mSurfaceTexture = new SurfaceTexture(mTextureRenderer.getTextureId());
@@ -226,83 +238,80 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
 
     @Override
     public Point getFrameSize() {
-        Camera.Size size = mCamera.getParameters().getPreviewSize();
-        return new Point(size.width, size.height);
+        return mFrameSize;
     }
 
     @Override
     public int getFrameFormat() {
-        return mCamera.getParameters().getPreviewFormat();
+        return mFrameFormat;
     }
 
     @Override
     public float getZoom() {
-        Camera.Parameters parameters = mCamera.getParameters();
-        if (parameters.isZoomSupported())
-            return (float) parameters.getZoomRatios().get(parameters.getZoom()) / 100f;
-        return 1.0f;
+        return mZoom;
     }
 
     @Override
     public void setZoom(float value) {
-        Camera.Parameters parameters = mCamera.getParameters();
-        if (parameters.isZoomSupported()) {
-            int zoom;
-            // Determine the zoom value from the zoom factor
-            List<Integer> zoomRatios = parameters.getZoomRatios();
-            value *= 100f;
-            if (value <= zoomRatios.get(0)) {
-                zoom = 0;
-            } else if (value >= zoomRatios.get(zoomRatios.size() - 1)) {
-                zoom = zoomRatios.size() - 1;
-            } else {
-                for (zoom = 0; zoom < zoomRatios.size() - 1; zoom++) {
-                    float r1 = zoomRatios.get(zoom);
-                    float r2 = zoomRatios.get(zoom + 1);
-                    if (r1 <= value && r2 > value) {
-                        if (Math.abs(1 - r2 / value) < Math.abs(1 - r1 / value))
-                            zoom++;
-                        break;
+        try {
+            Camera.Parameters parameters = mCamera.getParameters();
+            if (parameters.isZoomSupported()) {
+                int zoom;
+                // Determine the zoom value from the zoom factor
+                List<Integer> zoomRatios = parameters.getZoomRatios();
+                value *= 100f;
+                if (value <= zoomRatios.get(0)) {
+                    zoom = 0;
+                } else if (value >= zoomRatios.get(zoomRatios.size() - 1)) {
+                    zoom = zoomRatios.size() - 1;
+                } else {
+                    for (zoom = 0; zoom < zoomRatios.size() - 1; zoom++) {
+                        float r1 = zoomRatios.get(zoom);
+                        float r2 = zoomRatios.get(zoom + 1);
+                        if (r1 <= value && r2 > value) {
+                            if (Math.abs(1 - r2 / value) < Math.abs(1 - r1 / value))
+                                zoom++;
+                            break;
+                        }
                     }
                 }
-            }
-            Log.v(TAG, "zoom value " + zoom + ", factor " + zoomRatios.get(zoom));
-            // Set new zoom value
-            parameters.setZoom(zoom);
-            try {
+                Log.v(TAG, "zoom value " + zoom + ", factor " + zoomRatios.get(zoom));
+                // Set new zoom value
+                parameters.setZoom(zoom);
                 mCamera.setParameters(parameters);
-            } catch (RuntimeException e) {
-                Log.e(TAG, "can't set the zoom", e);
+                mZoom = (float) parameters.getZoomRatios().get(parameters.getZoom()) / 100f;
             }
+        } catch (RuntimeException e) {
+            Log.e(TAG, "can't set the zoom", e);
         }
     }
 
     @Override
     public void autoFocus(int x, int y) {
-        // Setup the focus (and metering) area
-        Camera.Parameters params = mCamera.getParameters();
-        if (!params.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_AUTO))
-            return;
-        if (params.getMaxNumFocusAreas() > 0) {
-            int l = Math.max(x - FOCUS_WINDOW_SIZE, -1000);
-            int t = Math.max(y - FOCUS_WINDOW_SIZE, -1000);
-            int r = Math.min(x + FOCUS_WINDOW_SIZE, 1000);
-            int b = Math.min(y + FOCUS_WINDOW_SIZE, 1000);
-            Camera.Area area = new Camera.Area(new Rect(l, t, r, b), 1000);
-            List<Camera.Area> areasList = new ArrayList<>();
-            areasList.add(area);
-            params.setFocusAreas(areasList);
-            if (params.getMaxNumMeteringAreas() > 0)
-                params.setMeteringAreas(areasList);
-            try {
-                mCamera.setParameters(params);
-                Log.v(TAG, "autofocus area: (" + l + "," + t + ")-(" + r + "," + b + ")");
-            } catch (RuntimeException e) {
-                Log.e(TAG, "can't setup the autofocus", e);
-            }
-        }
-        // Do autofocus
         try {
+            // Setup the focus (and metering) area
+            Camera.Parameters parameters = mCamera.getParameters();
+            if (!parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_AUTO))
+                return;
+            if (parameters.getMaxNumFocusAreas() > 0) {
+                int l = Math.max(x - FOCUS_WINDOW_SIZE, -1000);
+                int t = Math.max(y - FOCUS_WINDOW_SIZE, -1000);
+                int r = Math.min(x + FOCUS_WINDOW_SIZE, 1000);
+                int b = Math.min(y + FOCUS_WINDOW_SIZE, 1000);
+                Camera.Area area = new Camera.Area(new Rect(l, t, r, b), 1000);
+                List<Camera.Area> areasList = new ArrayList<>();
+                areasList.add(area);
+                parameters.setFocusAreas(areasList);
+                if (parameters.getMaxNumMeteringAreas() > 0)
+                    parameters.setMeteringAreas(areasList);
+                try {
+                    mCamera.setParameters(parameters);
+                    Log.v(TAG, "autofocus area: (" + l + "," + t + ")-(" + r + "," + b + ")");
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "can't setup the autofocus", e);
+                }
+            }
+            // Do autofocus
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                 @Override
                 public void onAutoFocus(boolean success, Camera camera) {
@@ -316,24 +325,27 @@ public class LiveCamera implements com.spynet.camera.media.Camera {
 
     @Override
     public boolean getTorch() {
-        String flashMode = mCamera.getParameters().getFlashMode();
-        return flashMode != null && flashMode.equals(Camera.Parameters.FLASH_MODE_TORCH);
+        return mTorch;
     }
 
     @Override
     public void setTorch(boolean state) {
-        Camera.Parameters params;
-        params = mCamera.getParameters();
-        List<String> flashModes = params.getSupportedFlashModes();
-        if (state) {
-            if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_TORCH))
-                params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-        } else {
-            if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_OFF))
-                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-        }
         try {
-            mCamera.setParameters(params);
+            Camera.Parameters parameters;
+            parameters = mCamera.getParameters();
+            List<String> flashModes = parameters.getSupportedFlashModes();
+            if (state) {
+                if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                    mTorch = true;
+                }
+            } else {
+                if (flashModes != null && flashModes.contains(Camera.Parameters.FLASH_MODE_OFF)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                    mTorch = false;
+                }
+            }
+            mCamera.setParameters(parameters);
         } catch (RuntimeException e) {
             Log.e(TAG, "can't set the torch", e);
         }

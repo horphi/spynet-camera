@@ -69,6 +69,13 @@ public abstract class AudioCodec {
          * @param newFormat audio data format
          */
         void onOutputFormatChanged(AudioCodec codec, MediaFormat newFormat);
+
+        /**
+         * Called when the codec dies for some unexpected reason.
+         *
+         * @param codec the AudioCodec that called this callback
+         */
+        void onDied(AudioCodec codec);
     }
 
     /**

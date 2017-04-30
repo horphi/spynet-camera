@@ -69,6 +69,13 @@ public abstract class VideoCodec {
          * @param newFormat video data format
          */
         void onOutputFormatChanged(VideoCodec codec, MediaFormat newFormat);
+
+        /**
+         * Called when the codec dies for some unexpected reason.
+         *
+         * @param codec the VideoCodec that called this callback
+         */
+        void onDied(VideoCodec codec);
     }
 
     /**

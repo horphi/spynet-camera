@@ -844,6 +844,13 @@ public class Recorder
     }
 
     @Override
+    public void onDied(VideoCodec codec) {
+        if (codec == mVideoEncoder) {
+            Log.e(TAG, "video encoder died");
+        }
+    }
+
+    @Override
     public void onDataAvailable(byte[] data, long timestamp) {
         // Send data to the encoder
         if (mAudioEncoder != null) {
@@ -878,6 +885,13 @@ public class Recorder
     public void onOutputFormatChanged(AudioCodec codec, MediaFormat newFormat) {
         if (codec == mAudioEncoder) {
             Log.d(TAG, "audio encoder output format changed to " + newFormat.toString());
+        }
+    }
+
+    @Override
+    public void onDied(AudioCodec codec) {
+        if (codec == mAudioEncoder) {
+            Log.e(TAG, "audio encoder died");
         }
     }
 }
