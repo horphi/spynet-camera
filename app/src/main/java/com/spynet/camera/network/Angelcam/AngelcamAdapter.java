@@ -26,6 +26,7 @@ import android.content.res.AssetManager;
 import android.os.Build;
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.spynet.camera.R;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.network.Angelcam.API.AckMessage;
@@ -519,6 +520,7 @@ public class AngelcamAdapter implements Closeable, TCPConnection.ConnectionCallb
                 try {
                     c.write(msg.getBody());
                 } catch (Exception e) {
+                    FirebaseCrash.report(e);
                     Log.e(TAG, "unexpected exception on session id " + session + ", service " + svc, e);
                     c.close();
                 }
@@ -567,6 +569,7 @@ public class AngelcamAdapter implements Closeable, TCPConnection.ConnectionCallb
             HungUpMessage hup = new HungUpMessage(0, params.getSessionID(), AckMessage.ERROR_NO_ERROR);
             params.getConnection().write(hup.toByteArray());
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while sending HUP", e);
         }
         Log.d(TAG, "session stopped, id " + params.getSessionID() +

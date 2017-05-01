@@ -23,6 +23,8 @@ package com.spynet.camera.network;
 
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
@@ -51,6 +53,8 @@ public class TCPConnection implements Closeable {
     protected final String TAG = getClass().getSimpleName();
 
     protected final Socket mSocket;                     // The socket that represents the connection
+    protected final InetAddress mHostAddress;           // The IP address of the target host this socket is connected to
+    protected final InetAddress mLocalAddress;          // The local IP address this socket is bound to
     protected final ConnectionCallback mCallback;       // The callback to notify the client
     protected final Object mData;                       // Additional data attached to this object
 
@@ -98,6 +102,8 @@ public class TCPConnection implements Closeable {
      */
     public TCPConnection(Socket socket, ConnectionCallback callback, Object data) throws IOException {
         mSocket = socket;
+        mHostAddress = socket.getInetAddress();
+        mLocalAddress = socket.getLocalAddress();
         mInputStream = new BufferedInputStream(mSocket.getInputStream());
         mOutputStream = mSocket.getOutputStream();
         mCallback = callback;
@@ -136,19 +142,18 @@ public class TCPConnection implements Closeable {
     }
 
     /**
-     * @return the IP address of the target host this socket is connected to,
-     * or null if this socket is not yet connected.
+     * @return the IP address of the target host this socket is connected to
      */
     @Nullable
     public InetAddress getInetAddress() {
-        return mSocket.getInetAddress();
+        return mHostAddress;
     }
 
     /**
      * @return the local IP address this socket is bound to
      */
     public InetAddress getLocalAddress() {
-        return mSocket.getLocalAddress();
+        return mLocalAddress;
     }
 
     /**
@@ -264,6 +269,7 @@ public class TCPConnection implements Closeable {
                 mFuture.cancel(true);
             mSocket.close();
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while closing the socket", e);
         }
     }
@@ -279,6 +285,7 @@ public class TCPConnection implements Closeable {
         } catch (SocketException e) {
             Log.v(TAG, "socket closed");
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while handling " + mSocket.toString(), e);
         } finally {
             Log.d(TAG, "stop handling " + mSocket.toString());

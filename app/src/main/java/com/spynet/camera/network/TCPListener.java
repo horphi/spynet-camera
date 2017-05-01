@@ -23,6 +23,8 @@ package com.spynet.camera.network;
 
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -85,6 +87,7 @@ public class TCPListener implements Closeable {
             mThread.interrupt();
             mSocket.close();
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while closing the socket", e);
         }
     }
@@ -105,6 +108,7 @@ public class TCPListener implements Closeable {
                     Log.v(TAG, "socket closed");
                     break;
                 } catch (Exception e) {
+                    FirebaseCrash.report(e);
                     Log.e(TAG, "unexpected exception while listening, continue", e);
                 }
             }

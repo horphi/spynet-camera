@@ -25,6 +25,7 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.spynet.camera.common.TimeStamp;
 
 import java.io.Closeable;
@@ -193,6 +194,7 @@ public class AudioRecorder implements Closeable {
                         mCallback.onDataAvailable(mBuffer, timestamp);
                 }
             } catch (Exception e) {
+                FirebaseCrash.report(e);
                 Log.e(TAG, "unexpected exception while recording", e);
                 break;
             }

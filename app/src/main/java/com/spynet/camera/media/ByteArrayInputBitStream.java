@@ -59,7 +59,11 @@ public class ByteArrayInputBitStream extends ByteArrayInputStream {
         while (true) {
             if (mAvail > 0) {
                 pos -= mAvail;
-                res |= (mData << pos) & 0xFFFFFFFFL;
+                if (pos > 0) {
+                    res |= (mData << pos) & 0xFFFFFFFFL;
+                } else {
+                    res |= (mData >> -pos) & 0xFFFFFFFFL;
+                }
                 if (left > mAvail) {
                     left -= mAvail;
                 } else {

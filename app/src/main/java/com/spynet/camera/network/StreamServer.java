@@ -31,6 +31,7 @@ import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.spynet.camera.common.TimeoutCache;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.media.AudioData;
@@ -994,6 +995,7 @@ public class StreamServer
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while sending the JSON debug information", e);
         }
     }
@@ -1044,6 +1046,7 @@ public class StreamServer
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while sending the JSON sensors information", e);
         }
     }
@@ -1074,6 +1077,7 @@ public class StreamServer
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while sending the JSON video streams list", e);
         }
     }
@@ -1095,6 +1099,7 @@ public class StreamServer
             sendJSONObject(connection, jObject);
         } catch (JSONException e) {
             sendErrorReply(connection, "HTTP/1.1", 500, "Internal Error");
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while sending the JSON audio streams list", e);
         }
     }

@@ -28,8 +28,9 @@ android {
         applicationId "com.spynet.camtest"
         minSdkVersion 17
         targetSdkVersion 23
-        versionCode 42
-        versionName '2.4.11'
+        versionCode 43
+        versionName '2.4.12'
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -51,6 +52,10 @@ dependencies {
     compile 'org.bitlet:weupnp:0.1.4'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.google.firebase:firebase-crash:10.2.4'
+    testCompile 'junit:junit:4.12'
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
 }
 
 apply plugin: 'com.google.gms.google-services'

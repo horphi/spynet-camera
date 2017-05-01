@@ -26,6 +26,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -223,6 +225,7 @@ public class AudioEncoder extends AudioCodec implements Closeable {
             } catch (Exception e) {
                 if (mCodecCallback != null)
                     mCodecCallback.onDied(this);
+                FirebaseCrash.report(e);
                 Log.e(TAG, "unexpected exception while encoding", e);
                 break;
             }

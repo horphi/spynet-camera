@@ -37,6 +37,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.widget.Toast;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.spynet.camera.R;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.db.ConnectionsDbHelper;
@@ -670,8 +671,13 @@ public class StreamService extends Service
             }
         }
         // Log the connection
-        ConnectionsDbHelper dbHelper = new ConnectionsDbHelper(this);
-        dbHelper.log(host, id, System.currentTimeMillis());
+        try {
+            ConnectionsDbHelper dbHelper = new ConnectionsDbHelper(this);
+            dbHelper.log(host, id, System.currentTimeMillis());
+        } catch (Exception e) {
+            FirebaseCrash.report(e);
+            Log.e(TAG, "unexpected exception while logging the connection", e);
+        }
     }
 
     @Override

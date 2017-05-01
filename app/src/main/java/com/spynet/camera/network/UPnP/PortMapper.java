@@ -23,6 +23,8 @@ package com.spynet.camera.network.UPnP;
 
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
+
 import org.bitlet.weupnp.GatewayDevice;
 import org.bitlet.weupnp.GatewayDiscover;
 import org.bitlet.weupnp.PortMappingEntry;
@@ -81,6 +83,7 @@ public class PortMapper implements Closeable {
                         Log.w(TAG, "no valid gateway device found");
                     }
                 } catch (Exception e) {
+                    FirebaseCrash.report(e);
                     Log.e(TAG, "unexpected exception while adding port mapping", e);
                 }
             }
@@ -113,6 +116,7 @@ public class PortMapper implements Closeable {
                             Log.e(TAG, "failed to remove port mapping");
                         }
                     } catch (Exception e) {
+                        FirebaseCrash.report(e);
                         Log.e(TAG, "unexpected exception while removing port mapping", e);
                     }
                 }

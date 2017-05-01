@@ -23,6 +23,7 @@ package com.spynet.camera.network;
 
 import android.util.Log;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.spynet.camera.common.TimeStamp;
 import com.spynet.camera.common.Utils;
 import com.spynet.camera.media.AudioData;
@@ -119,6 +120,7 @@ public abstract class RTPAudioPacketizer implements Closeable {
             if (mStreamThread.isAlive())
                 Log.w(TAG, "cannot close the packetizer now");
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception while closing the packetizer", e);
         }
     }
@@ -234,6 +236,7 @@ public abstract class RTPAudioPacketizer implements Closeable {
         } catch (SocketException e) {
             Log.v(TAG, "socket closed");
         } catch (Exception e) {
+            FirebaseCrash.report(e);
             Log.e(TAG, "unexpected exception", e);
         } finally {
             mConnection.notifyStreamStopped(StreamConnection.TYPE_AAC, id);
